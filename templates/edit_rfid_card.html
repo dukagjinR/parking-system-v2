@@ -1,0 +1,191 @@
+{% extends "base.html" %}
+
+{% block title %}Edito Kartelën RFID{% endblock %}
+
+{% block content %}
+<div class="container-fluid">
+    <!-- Page Header -->
+    <div class="d-sm-flex align-items-center justify-content-between mb-4">
+        <h1 class="h3 mb-0 text-gray-800">
+            <i class="fas fa-edit"></i> Edito Kartelën RFID
+        </h1>
+        <a href="{{ url_for('rfid_cards') }}" class="btn btn-secondary">
+            <i class="fas fa-arrow-left"></i> Kthehu
+        </a>
+    </div>
+
+    <!-- Flash Messages -->
+    {% with messages = get_flashed_messages(with_categories=true) %}
+        {% if messages %}
+            {% for category, message in messages %}
+                <div class="alert alert-{{ 'danger' if category == 'error' else category }} alert-dismissible fade show" role="alert">
+                    {{ message }}
+                    <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
+                </div>
+            {% endfor %}
+        {% endif %}
+    {% endwith %}
+
+    <!-- Edit RFID Card Form -->
+    <div class="row justify-content-center">
+        <div class="col-lg-8">
+            <div class="card shadow">
+                <div class="card-header py-3">
+                    <h6 class="m-0 font-weight-bold text-primary">Informacionet e Kartelës RFID</h6>
+                </div>
+                <div class="card-body">
+                    <form method="POST">
+                        <div class="row">
+                            <div class="col-md-6">
+                                <div class="mb-3">
+                                    <label for="card_number" class="form-label">
+                                        <i class="fas fa-credit-card"></i> Numri i Kartelës RFID
+                                    </label>
+                                    <input type="text" class="form-control" id="card_number" 
+                                           value="{{ card.card_number }}" readonly>
+                                    <div class="form-text">Numri i kartelës nuk mund të ndryshohet</div>
+                                </div>
+                            </div>
+                            <div class="col-md-6">
+                                <div class="mb-3">
+                                    <label for="owner_name" class="form-label">
+                                        <i class="fas fa-user"></i> Emri i Pronarit
+                                    </label>
+                                    <input type="text" class="form-control" id="owner_name" name="owner_name" 
+                                           value="{{ card.owner_name }}" required>
+                                    <div class="form-text">Emri i plotë i pronarit të kartelës</div>
+                                </div>
+                            </div>
+                        </div>
+
+                        <div class="row">
+                            <div class="col-md-6">
+                                <div class="mb-3">
+                                    <label for="payment_type" class="form-label">
+                                        <i class="fas fa-calendar"></i> Lloji i Pagesës
+                                    </label>
+                                    <input type="text" class="form-control" id="payment_type" 
+                                           value="{% if card.payment_type == '1_month' %}1 Muaj{% elif card.payment_type == '3_months' %}3 Muaj{% elif card.payment_type == '6_months' %}6 Muaj{% elif card.payment_type == '1_year' %}1 Vit{% endif %}" readonly>
+                                    <div class="form-text">Lloji i pagesës nuk mund të ndryshohet</div>
+                                </div>
+                            </div>
+                            <div class="col-md-6">
+                                <div class="mb-3">
+                                    <label for="status" class="form-label">
+                                        <i class="fas fa-toggle-on"></i> Statusi
+                                    </label>
+                                    <select class="form-select" id="status" name="status" required>
+                                        <option value="active" {% if card.status == 'active' %}selected{% endif %}>Aktive</option>
+                                        <option value="blocked" {% if card.status == 'blocked' %}selected{% endif %}>E Bllokuar</option>
+                                        <option value="expired" {% if card.status == 'expired' %}selected{% endif %}>E Skaduar</option>
+                                    </select>
+                                    <div class="form-text">Statusi aktual i kartelës</div>
+                                </div>
+                            </div>
+                        </div>
+
+                        <div class="row">
+                            <div class="col-md-6">
+                                <div class="mb-3">
+                                    <label for="start_date" class="form-label">
+                                        <i class="fas fa-calendar-plus"></i> Data e Fillimit
+                                    </label>
+                                    <input type="text" class="form-control" id="start_date" 
+                                           value="{{ card.start_date.strftime('%d/%m/%Y %H:%M') }}" readonly>
+                                </div>
+                            </div>
+                            <div class="col-md-6">
+                                <div class="mb-3">
+                                    <label for="end_date" class="form-label">
+                                        <i class="fas fa-calendar-minus"></i> Data e Mbarimit
+                                    </label>
+                                    <input type="text" class="form-control" id="end_date" 
+                                           value="{{ card.end_date.strftime('%d/%m/%Y %H:%M') }}" readonly>
+                                </div>
+                            </div>
+                        </div>
+
+                        <div class="row">
+                            <div class="col-md-6">
+                                <div class="mb-3">
+                                    <label for="current_entries" class="form-label">
+                                        <i class="fas fa-sign-in-alt"></i> Hyrjet Aktuale
+                                    </label>
+                                    <input type="text" class="form-control" id="current_entries" 
+                                           value="{{ card.current_entries }}/{{ card.max_entries }}" readonly>
+                                </div>
+                            </div>
+                            <div class="col-md-6">
+                                <div class="mb-3">
+                                    <label for="is_inside" class="form-label">
+                                        <i class="fas fa-car"></i> Brenda Parkingut
+                                    </label>
+                                    <input type="text" class="form-control" id="is_inside" 
+                                           value="{% if card.is_inside %}Po{% else %}Jo{% endif %}" readonly>
+                                </div>
+                            </div>
+                        </div>
+
+                        <div class="row">
+                            <div class="col-md-12">
+                                <div class="alert alert-info">
+                                    <h6><i class="fas fa-info-circle"></i> Informacion i Kartelës</h6>
+                                    <ul class="mb-0">
+                                        <li><strong>Krijuar më:</strong> {{ card.created_at.strftime('%d/%m/%Y %H:%M') }}</li>
+                                        {% if card.last_entry_time %}
+                                        <li><strong>Hyrja e fundit:</strong> {{ card.last_entry_time.strftime('%d/%m/%Y %H:%M') }}</li>
+                                        {% endif %}
+                                        {% if card.last_exit_time %}
+                                        <li><strong>Dalja e fundit:</strong> {{ card.last_exit_time.strftime('%d/%m/%Y %H:%M') }}</li>
+                                        {% endif %}
+                                        <li><strong>Vlefshmëria:</strong> 
+                                            {% if card.is_valid() %}
+                                                <span class="text-success">E Vlefshme</span>
+                                            {% else %}
+                                                <span class="text-danger">Jo e Vlefshme</span>
+                                            {% endif %}
+                                        </li>
+                                    </ul>
+                                </div>
+                            </div>
+                        </div>
+
+                        <div class="d-grid gap-2 d-md-flex justify-content-md-end">
+                            <a href="{{ url_for('rfid_cards') }}" class="btn btn-secondary me-md-2">
+                                <i class="fas fa-times"></i> Anulo
+                            </a>
+                            <button type="submit" class="btn btn-primary">
+                                <i class="fas fa-save"></i> Ruaj Ndryshimet
+                            </button>
+                        </div>
+                    </form>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}
+
+{% block scripts %}
+<script>
+// Add visual indicators for card status
+document.addEventListener('DOMContentLoaded', function() {
+    const statusSelect = document.getElementById('status');
+    const endDateInput = document.getElementById('end_date');
+    
+    // Check if card is expired
+    const endDate = new Date('{{ card.end_date.isoformat() }}');
+    const now = new Date();
+    
+    if (endDate < now) {
+        endDateInput.classList.add('text-danger');
+        endDateInput.classList.add('fw-bold');
+    }
+    
+    // Update status based on expiration
+    if (endDate < now && statusSelect.value === 'active') {
+        statusSelect.value = 'expired';
+    }
+});
+</script>
+{% endblock %} 

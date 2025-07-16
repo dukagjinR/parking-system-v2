@@ -1,0 +1,221 @@
+{% extends "base.html" %}
+
+{% block title %}Menaxhimi i Kartelave RFID{% endblock %}
+
+{% block content %}
+<div class="container-fluid">
+    <!-- Page Header -->
+    <div class="d-sm-flex align-items-center justify-content-between mb-4">
+        <h1 class="h3 mb-0 text-gray-800">
+            <i class="fas fa-credit-card"></i> Menaxhimi i Kartelave RFID
+        </h1>
+        <a href="{{ url_for('add_rfid_card') }}" class="btn btn-primary">
+            <i class="fas fa-plus"></i> Shto Kartelë të Re
+        </a>
+    </div>
+
+    <!-- Flash Messages -->
+    {% with messages = get_flashed_messages(with_categories=true) %}
+        {% if messages %}
+            {% for category, message in messages %}
+                <div class="alert alert-{{ 'danger' if category == 'error' else category }} alert-dismissible fade show" role="alert">
+                    {{ message }}
+                    <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
+                </div>
+            {% endfor %}
+        {% endif %}
+    {% endwith %}
+
+    <!-- Statistics Cards -->
+    <div class="row mb-4">
+        <div class="col-xl-3 col-md-6 mb-4">
+            <div class="card border-left-primary shadow h-100 py-2">
+                <div class="card-body">
+                    <div class="row no-gutters align-items-center">
+                        <div class="col mr-2">
+                            <div class="text-xs font-weight-bold text-primary text-uppercase mb-1">Kartela Aktive</div>
+                            <div class="h5 mb-0 font-weight-bold text-gray-800">
+                                {{ cards|selectattr('status', 'equalto', 'active')|list|length }}
+                            </div>
+                        </div>
+                        <div class="col-auto">
+                            <i class="fas fa-check-circle fa-2x text-success"></i>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <div class="col-xl-3 col-md-6 mb-4">
+            <div class="card border-left-warning shadow h-100 py-2">
+                <div class="card-body">
+                    <div class="row no-gutters align-items-center">
+                        <div class="col mr-2">
+                            <div class="text-xs font-weight-bold text-warning text-uppercase mb-1">Kartela të Skaduara</div>
+                            <div class="h5 mb-0 font-weight-bold text-gray-800">
+                                {{ cards|selectattr('status', 'equalto', 'expired')|list|length }}
+                            </div>
+                        </div>
+                        <div class="col-auto">
+                            <i class="fas fa-exclamation-triangle fa-2x text-warning"></i>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <div class="col-xl-3 col-md-6 mb-4">
+            <div class="card border-left-danger shadow h-100 py-2">
+                <div class="card-body">
+                    <div class="row no-gutters align-items-center">
+                        <div class="col mr-2">
+                            <div class="text-xs font-weight-bold text-danger text-uppercase mb-1">Kartela të Bllokuara</div>
+                            <div class="h5 mb-0 font-weight-bold text-gray-800">
+                                {{ cards|selectattr('status', 'equalto', 'blocked')|list|length }}
+                            </div>
+                        </div>
+                        <div class="col-auto">
+                            <i class="fas fa-ban fa-2x text-danger"></i>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <div class="col-xl-3 col-md-6 mb-4">
+            <div class="card border-left-info shadow h-100 py-2">
+                <div class="card-body">
+                    <div class="row no-gutters align-items-center">
+                        <div class="col mr-2">
+                            <div class="text-xs font-weight-bold text-info text-uppercase mb-1">Brenda Parkingut</div>
+                            <div class="h5 mb-0 font-weight-bold text-gray-800">
+                                {{ cards|selectattr('is_inside', 'equalto', true)|list|length }}
+                            </div>
+                        </div>
+                        <div class="col-auto">
+                            <i class="fas fa-car fa-2x text-info"></i>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- RFID Cards Table -->
+    <div class="card shadow mb-4">
+        <div class="card-header py-3">
+            <h6 class="m-0 font-weight-bold text-primary">Kartelat RFID</h6>
+        </div>
+        <div class="card-body">
+            <div class="table-responsive">
+                <table class="table table-bordered" id="dataTable" width="100%" cellspacing="0">
+                    <thead>
+                        <tr>
+                            <th>Numër Kartele</th>
+                            <th>Pronari</th>
+                            <th>Lloji i Pagesës</th>
+                            <th>Data e Fillimit</th>
+                            <th>Data e Mbarimit</th>
+                            <th>Statusi</th>
+                            <th>Hyrjet</th>
+                            <th>Brenda</th>
+                            <th>Veprime</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        {% for card in cards %}
+                        <tr>
+                            <td><code>{{ card.card_number }}</code></td>
+                            <td><strong>{{ card.owner_name }}</strong></td>
+                            <td>
+                                {% if card.payment_type == '1_month' %}
+                                    <span class="badge bg-info">1 Muaj</span>
+                                {% elif card.payment_type == '3_months' %}
+                                    <span class="badge bg-primary">3 Muaj</span>
+                                {% elif card.payment_type == '6_months' %}
+                                    <span class="badge bg-warning">6 Muaj</span>
+                                {% elif card.payment_type == '1_year' %}
+                                    <span class="badge bg-success">1 Vit</span>
+                                {% endif %}
+                            </td>
+                            <td>{{ card.start_date.strftime('%d/%m/%Y') }}</td>
+                            <td>
+                                <span class="{% if card.end_date < now %}text-danger{% else %}text-success{% endif %}">
+                                    {{ card.end_date.strftime('%d/%m/%Y') }}
+                                </span>
+                            </td>
+                            <td>
+                                {% if card.status == 'active' %}
+                                    <span class="badge bg-success">Aktive</span>
+                                {% elif card.status == 'expired' %}
+                                    <span class="badge bg-warning">E Skaduar</span>
+                                {% elif card.status == 'blocked' %}
+                                    <span class="badge bg-danger">E Bllokuar</span>
+                                {% endif %}
+                            </td>
+                            <td>{{ card.current_entries }}/{{ card.max_entries }}</td>
+                            <td>
+                                {% if card.is_inside %}
+                                    <span class="badge bg-success">Po</span>
+                                {% else %}
+                                    <span class="badge bg-secondary">Jo</span>
+                                {% endif %}
+                            </td>
+                            <td>
+                                <div class="btn-group" role="group">
+                                    <a href="{{ url_for('edit_rfid_card', card_id=card.id) }}" 
+                                       class="btn btn-sm btn-outline-primary">
+                                        <i class="fas fa-edit"></i>
+                                    </a>
+                                    <button type="button" class="btn btn-sm btn-outline-danger" 
+                                            onclick="deleteCard({{ card.id }}, '{{ card.owner_name }}')">
+                                        <i class="fas fa-trash"></i>
+                                    </button>
+                                </div>
+                            </td>
+                        </tr>
+                        {% endfor %}
+                    </tbody>
+                </table>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Delete Confirmation Modal -->
+<div class="modal fade" id="deleteModal" tabindex="-1">
+    <div class="modal-dialog">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h5 class="modal-title">Konfirmo Fshirjen</h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+            </div>
+            <div class="modal-body">
+                <p>A jeni të sigurt që dëshironi të fshini kartelën RFID për <strong id="cardOwner"></strong>?</p>
+                <p class="text-danger">Ky veprim nuk mund të anulohet!</p>
+            </div>
+            <div class="modal-footer">
+                <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Anulo</button>
+                <form id="deleteForm" method="POST" style="display: inline;">
+                    <button type="submit" class="btn btn-danger">Fshi</button>
+                </form>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}
+
+{% block scripts %}
+<script>
+function deleteCard(cardId, ownerName) {
+    document.getElementById('cardOwner').textContent = ownerName;
+    document.getElementById('deleteForm').action = `/rfid_cards/delete/${cardId}`;
+    new bootstrap.Modal(document.getElementById('deleteModal')).show();
+}
+
+// Auto-refresh status every 30 seconds
+setInterval(function() {
+    location.reload();
+}, 30000);
+</script>
+{% endblock %} 

@@ -1,0 +1,177 @@
+{% extends "base.html" %}
+
+{% block title %}Hyrja e Automjetit - Sistemi i Menaxhimit të Parkingut{% endblock %}
+
+{% block content %}
+<div class="d-flex justify-content-between flex-wrap flex-md-nowrap align-items-center pt-3 pb-2 mb-3 border-bottom">
+    <h1 class="h2"><i class="fas fa-sign-in-alt"></i> Hyrja e Automjetit</h1>
+    <div class="btn-toolbar mb-2 mb-md-0">
+        <a href="{{ url_for('dashboard') }}" class="btn btn-sm btn-outline-secondary">
+            <i class="fas fa-arrow-left"></i> Kthehu në Dashboard
+        </a>
+    </div>
+</div>
+
+<div class="row">
+    <div class="col-md-8">
+        <div class="card">
+            <div class="card-header">
+                <h5 class="mb-0"><i class="fas fa-car me-2"></i>Regjistro Automjet të Ri</h5>
+            </div>
+            <div class="card-body">
+                <form method="POST">
+                    <div class="mb-3">
+                        <label for="plate_number" class="form-label">Numri i Targës</label>
+                        <input type="text" class="form-control" id="plate_number" name="plate_number" 
+                               placeholder="Shkruani numrin e targës (p.sh. ABC-123)" required>
+                        <div class="form-text">Shkruani numrin e plotë të targës së automjetit</div>
+                    </div>
+                    
+                    <div class="d-grid">
+                        <button type="submit" class="btn btn-success btn-lg">
+                            <i class="fas fa-sign-in-alt me-2"></i>
+                            Regjistro Hyrjen
+                        </button>
+                    </div>
+                </form>
+            </div>
+        </div>
+    </div>
+    
+    <div class="col-md-4">
+        <div class="card">
+            <div class="card-header">
+                <h5 class="mb-0"><i class="fas fa-info-circle me-2"></i>Informacion</h5>
+            </div>
+            <div class="card-body">
+                <ul class="list-unstyled">
+                    <li class="mb-2">
+                        <i class="fas fa-camera text-primary me-2"></i>
+                        Foto do të kapet automatikisht
+                    </li>
+                    <li class="mb-2">
+                        <i class="fas fa-print text-primary me-2"></i>
+                        Bileta do të printohet
+                    </li>
+                    <li class="mb-2">
+                        <i class="fas fa-door-open text-primary me-2"></i>
+                        Barriera do të hapet
+                    </li>
+                    <li class="mb-2">
+                        <i class="fas fa-database text-primary me-2"></i>
+                        Të dhënat do të ruhen
+                    </li>
+                </ul>
+                
+                <hr>
+                
+                <div class="alert alert-info">
+                    <h6><i class="fas fa-lightbulb me-2"></i>Këshilla:</h6>
+                    <ul class="mb-0">
+                        <li>Sigurohuni që targa të jetë e dukshme</li>
+                        <li>Prisni derisa fotoja të kapet</li>
+                        <li>Merrni billetën para se të vazhdoni</li>
+                    </ul>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Recent Entries -->
+<div class="row mt-4">
+    <div class="col-12">
+        <div class="card">
+            <div class="card-header">
+                <h5 class="mb-0"><i class="fas fa-history me-2"></i>Hyrjet e Fundit</h5>
+            </div>
+            <div class="card-body">
+                <div class="table-responsive">
+                    <table class="table table-hover">
+                        <thead>
+                            <tr>
+                                <th>Koha</th>
+                                <th>Targa</th>
+                                <th>Bileta</th>
+                                <th>Statusi</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            {% for vehicle in recent_entries %}
+                            <tr>
+                                <td>{{ vehicle.entry_time.strftime('%H:%M:%S') }}</td>
+                                <td><strong>{{ vehicle.plate_number }}</strong></td>
+                                <td><span class="badge bg-primary">{{ vehicle.ticket_number }}</span></td>
+                                <td><span class="badge bg-success">Brenda</span></td>
+                            </tr>
+                            {% else %}
+                            <tr>
+                                <td colspan="4" class="text-center text-muted">Nuk ka hyrje të fundit</td>
+                            </tr>
+                            {% endfor %}
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}
+
+{% block scripts %}
+<script>
+// Load recent entries
+function loadRecentEntries() {
+    fetch('/api/vehicles')
+        .then(response => response.json())
+        .then(data => {
+            const recentEntries = data.filter(v => v.is_inside).slice(0, 5);
+            const container = document.getElementById('recent-entries');
+            
+            if (recentEntries.length === 0) {
+                container.innerHTML = '<p class="text-muted text-center">No recent entries</p>';
+                return;
+            }
+            
+            let html = '<div class="table-responsive"><table class="table table-hover">';
+            html += '<thead><tr><th>Plate</th><th>Ticket</th><th>Entry Time</th><th>Duration</th></tr></thead><tbody>';
+            
+            recentEntries.forEach(vehicle => {
+                const entryTime = new Date(vehicle.entry_time);
+                const now = new Date();
+                const duration = Math.floor((now - entryTime) / (1000 * 60)); // minutes
+                
+                html += `<tr>
+                    <td><strong>${vehicle.plate_number}</strong></td>
+                    <td><code>${vehicle.ticket_number}</code></td>
+                    <td>${entryTime.toLocaleTimeString()}</td>
+                    <td>${duration} min</td>
+                </tr>`;
+            });
+            
+            html += '</tbody></table></div>';
+            container.innerHTML = html;
+        })
+        .catch(error => {
+            console.error('Error loading recent entries:', error);
+            document.getElementById('recent-entries').innerHTML = 
+                '<p class="text-danger text-center">Error loading recent entries</p>';
+        });
+}
+
+// Auto-refresh recent entries
+loadRecentEntries();
+setInterval(loadRecentEntries, 10000);
+
+// Form validation
+document.getElementById('plate_number').addEventListener('input', function(e) {
+    const plate = e.target.value.toUpperCase();
+    e.target.value = plate;
+});
+
+// Auto-focus on plate number input
+document.addEventListener('DOMContentLoaded', function() {
+    document.getElementById('plate_number').focus();
+});
+</script>
+{% endblock %} 

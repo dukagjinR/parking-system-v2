@@ -1,0 +1,133 @@
+{% extends "base.html" %}
+
+{% block title %}Shto Kartelë RFID të Re{% endblock %}
+
+{% block content %}
+<div class="container-fluid">
+    <!-- Page Header -->
+    <div class="d-sm-flex align-items-center justify-content-between mb-4">
+        <h1 class="h3 mb-0 text-gray-800">
+            <i class="fas fa-plus"></i> Shto Kartelë RFID të Re
+        </h1>
+        <a href="{{ url_for('rfid_cards') }}" class="btn btn-secondary">
+            <i class="fas fa-arrow-left"></i> Kthehu
+        </a>
+    </div>
+
+    <!-- Flash Messages -->
+    {% with messages = get_flashed_messages(with_categories=true) %}
+        {% if messages %}
+            {% for category, message in messages %}
+                <div class="alert alert-{{ 'danger' if category == 'error' else category }} alert-dismissible fade show" role="alert">
+                    {{ message }}
+                    <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
+                </div>
+            {% endfor %}
+        {% endif %}
+    {% endwith %}
+
+    <!-- Add RFID Card Form -->
+    <div class="row justify-content-center">
+        <div class="col-lg-8">
+            <div class="card shadow">
+                <div class="card-header py-3">
+                    <h6 class="m-0 font-weight-bold text-primary">Informacionet e Kartelës RFID</h6>
+                </div>
+                <div class="card-body">
+                    <form method="POST">
+                        <div class="row">
+                            <div class="col-md-6">
+                                <div class="mb-3">
+                                    <label for="card_number" class="form-label">
+                                        <i class="fas fa-credit-card"></i> Numri i Kartelës RFID
+                                    </label>
+                                    <input type="text" class="form-control" id="card_number" name="card_number" 
+                                           placeholder="P.sh: RFID123456789" required>
+                                    <div class="form-text">Numri unik i kartelës RFID</div>
+                                </div>
+                            </div>
+                            <div class="col-md-6">
+                                <div class="mb-3">
+                                    <label for="owner_name" class="form-label">
+                                        <i class="fas fa-user"></i> Emri i Pronarit
+                                    </label>
+                                    <input type="text" class="form-control" id="owner_name" name="owner_name" 
+                                           placeholder="Emri dhe mbiemri" required>
+                                    <div class="form-text">Emri i plotë i pronarit të kartelës</div>
+                                </div>
+                            </div>
+                        </div>
+
+                        <div class="row">
+                            <div class="col-md-12">
+                                <div class="mb-3">
+                                    <label for="payment_type" class="form-label">
+                                        <i class="fas fa-calendar"></i> Lloji i Pagesës
+                                    </label>
+                                    <select class="form-select" id="payment_type" name="payment_type" required>
+                                        <option value="">Zgjidhni llojin e pagesës</option>
+                                        <option value="1_month">1 Muaj - €30.00</option>
+                                        <option value="3_months">3 Muaj - €80.00</option>
+                                        <option value="6_months">6 Muaj - €150.00</option>
+                                        <option value="1_year">1 Vit - €280.00</option>
+                                    </select>
+                                    <div class="form-text">Zgjidhni periudhën e pagesës</div>
+                                </div>
+                            </div>
+                        </div>
+
+                        <div class="row">
+                            <div class="col-md-12">
+                                <div class="alert alert-info">
+                                    <h6><i class="fas fa-info-circle"></i> Informacion i Rëndësishëm</h6>
+                                    <ul class="mb-0">
+                                        <li>Kartela do të jetë aktive nga momenti i krijimit</li>
+                                        <li>Data e mbarimit llogaritet automatikisht bazuar në llojin e pagesës</li>
+                                        <li>Kartela lejon hyrje/dalje të pakufizuar gjatë periudhës së vlefshmërisë</li>
+                                        <li>Nuk lejohet një kartelë të bëjë 2 hyrje pa dalje</li>
+                                    </ul>
+                                </div>
+                            </div>
+                        </div>
+
+                        <div class="d-grid gap-2 d-md-flex justify-content-md-end">
+                            <a href="{{ url_for('rfid_cards') }}" class="btn btn-secondary me-md-2">
+                                <i class="fas fa-times"></i> Anulo
+                            </a>
+                            <button type="submit" class="btn btn-primary">
+                                <i class="fas fa-save"></i> Krijo Kartelën
+                            </button>
+                        </div>
+                    </form>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}
+
+{% block scripts %}
+<script>
+// Auto-format card number
+document.getElementById('card_number').addEventListener('input', function(e) {
+    let value = e.target.value.replace(/[^A-Za-z0-9]/g, '').toUpperCase();
+    e.target.value = value;
+});
+
+// Show payment type details
+document.getElementById('payment_type').addEventListener('change', function(e) {
+    const paymentType = e.target.value;
+    const prices = {
+        '1_month': '€30.00',
+        '3_months': '€80.00', 
+        '6_months': '€150.00',
+        '1_year': '€280.00'
+    };
+    
+    if (paymentType && prices[paymentType]) {
+        // You can add additional logic here if needed
+        console.log(`Selected payment type: ${paymentType} - ${prices[paymentType]}`);
+    }
+});
+</script>
+{% endblock %} 

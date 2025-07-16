@@ -1,0 +1,265 @@
+{% extends "base.html" %}
+
+{% block title %}Statusi i Harduerit të Testimit{% endblock %}
+
+{% block content %}
+<div class="container mt-4">
+    <div class="row">
+        <div class="col-12">
+            <h1 class="mb-4">🔧 Statusi i Harduerit të Testimit</h1>
+            <div class="alert alert-info">
+                <strong>Mjedisi i Harduerit të Simuluar</strong> - Të gjitha funksionet e harduerit janë simuluar
+            </div>
+        </div>
+    </div>
+
+    <div class="row">
+        <div class="col-md-6">
+            <div class="card">
+                <div class="card-header">
+                    <h5>📷 Sistemi i Kamerës</h5>
+                </div>
+                <div class="card-body">
+                    <div class="row">
+                        <div class="col-6">
+                            <div class="d-flex align-items-center mb-2">
+                                <i class="fas fa-camera text-primary me-2"></i>
+                                <span>Kamera e Hyrjes</span>
+                                <span class="badge bg-success ms-auto">E Lidhur</span>
+                            </div>
+                        </div>
+                        <div class="col-6">
+                            <div class="d-flex align-items-center mb-2">
+                                <i class="fas fa-camera text-primary me-2"></i>
+                                <span>Kamera e Daljes</span>
+                                <span class="badge bg-success ms-auto">E Lidhur</span>
+                            </div>
+                        </div>
+                    </div>
+                    <div class="mt-3">
+                        <button class="btn btn-sm btn-primary" onclick="testCamera()">
+                            <i class="fas fa-camera"></i> Testo Kapjen e Kamerës
+                        </button>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <div class="col-md-6">
+            <div class="card">
+                <div class="card-header">
+                    <h5>🚪 Sistemi i Barrierave</h5>
+                </div>
+                <div class="card-body">
+                    <div class="row">
+                        <div class="col-6">
+                            <div class="d-flex align-items-center mb-2">
+                                <i class="fas fa-door-open text-primary me-2"></i>
+                                <span>Barriera e Hyrjes</span>
+                                <span class="badge bg-secondary ms-auto" id="entry-status">E Mbyllur</span>
+                            </div>
+                        </div>
+                        <div class="col-6">
+                            <div class="d-flex align-items-center mb-2">
+                                <i class="fas fa-door-open text-primary me-2"></i>
+                                <span>Barriera e Daljes</span>
+                                <span class="badge bg-secondary ms-auto" id="exit-status">E Mbyllur</span>
+                            </div>
+                        </div>
+                    </div>
+                    <div class="mt-3">
+                        <button class="btn btn-sm btn-success me-2" onclick="testEntryBarrier()">
+                            <i class="fas fa-door-open"></i> Testo Hyrjen
+                        </button>
+                        <button class="btn btn-sm btn-danger" onclick="testExitBarrier()">
+                            <i class="fas fa-door-open"></i> Testo Daljen
+                        </button>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <div class="row mt-4">
+        <div class="col-md-6">
+            <div class="card">
+                <div class="card-header">
+                    <h5>🖨️ Sistemi i Printerit</h5>
+                </div>
+                <div class="card-body">
+                    <div class="row">
+                        <div class="col-6">
+                            <div class="d-flex align-items-center mb-2">
+                                <i class="fas fa-print text-primary me-2"></i>
+                                <span>Printeri i Biletave</span>
+                                <span class="badge bg-success ms-auto">Gati</span>
+                            </div>
+                        </div>
+                        <div class="col-6">
+                            <div class="d-flex align-items-center mb-2">
+                                <i class="fas fa-print text-primary me-2"></i>
+                                <span>Printeri i Faturave</span>
+                                <span class="badge bg-success ms-auto">Gati</span>
+                            </div>
+                        </div>
+                    </div>
+                    <div class="mt-3">
+                        <button class="btn btn-sm btn-primary me-2" onclick="testTicketPrinter()">
+                            <i class="fas fa-print"></i> Testo Biletën
+                        </button>
+                        <button class="btn btn-sm btn-warning" onclick="testReceiptPrinter()">
+                            <i class="fas fa-print"></i> Testo Faturën
+                        </button>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <div class="col-md-6">
+            <div class="card">
+                <div class="card-header">
+                    <h5>📱 Sistemi i Skanerit</h5>
+                </div>
+                <div class="card-body">
+                    <div class="row">
+                        <div class="col-6">
+                            <div class="d-flex align-items-center mb-2">
+                                <i class="fas fa-barcode text-primary me-2"></i>
+                                <span>Skaneri i Barcode</span>
+                                <span class="badge bg-success ms-auto">Gati</span>
+                            </div>
+                        </div>
+                        <div class="col-6">
+                            <div class="d-flex align-items-center mb-2">
+                                <i class="fas fa-qrcode text-primary me-2"></i>
+                                <span>Skaneri i QR</span>
+                                <span class="badge bg-success ms-auto">Gati</span>
+                            </div>
+                        </div>
+                    </div>
+                    <div class="mt-3">
+                        <button class="btn btn-sm btn-info" onclick="testScanner()">
+                            <i class="fas fa-barcode"></i> Testo Skanerin
+                        </button>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <div class="row mt-4">
+        <div class="col-12">
+            <div class="card">
+                <div class="card-header">
+                    <h5>📊 Rezultatet e Testimit</h5>
+                </div>
+                <div class="card-body">
+                    <div id="test-output">
+                        <p class="text-muted">Klikoni në çdo buton testimi më sipër për të parë rezultatet këtu</p>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <div class="row mt-4">
+        <div class="col-12">
+            <a href="/test" class="btn btn-secondary">
+                <i class="fas fa-arrow-left"></i> Kthehu në Dashboard të Testimit
+            </a>
+        </div>
+    </div>
+</div>
+
+<script>
+function testCamera() {
+    fetch('/test/api/camera/capture')
+        .then(response => response.json())
+        .then(data => {
+            document.getElementById('test-output').innerHTML = `
+                <div class="alert alert-success">
+                    <h6>Rezultati i Testit të Kamerës:</h6>
+                    <pre>${JSON.stringify(data, null, 2)}</pre>
+                </div>
+            `;
+        });
+}
+
+function testEntryBarrier() {
+    fetch('/test/api/barrier/entry')
+        .then(response => response.json())
+        .then(data => {
+            document.getElementById('entry-status').textContent = 'E Hapur';
+            document.getElementById('entry-status').className = 'badge bg-success ms-auto';
+            document.getElementById('test-output').innerHTML = `
+                <div class="alert alert-success">
+                    <h6>Rezultati i Testit të Barrierës së Hyrjes:</h6>
+                    <pre>${JSON.stringify(data, null, 2)}</pre>
+                </div>
+            `;
+            setTimeout(() => {
+                document.getElementById('entry-status').textContent = 'E Mbyllur';
+                document.getElementById('entry-status').className = 'badge bg-secondary ms-auto';
+            }, 2000);
+        });
+}
+
+function testExitBarrier() {
+    fetch('/test/api/barrier/exit')
+        .then(response => response.json())
+        .then(data => {
+            document.getElementById('exit-status').textContent = 'E Hapur';
+            document.getElementById('exit-status').className = 'badge bg-success ms-auto';
+            document.getElementById('test-output').innerHTML = `
+                <div class="alert alert-success">
+                    <h6>Rezultati i Testit të Barrierës së Daljes:</h6>
+                    <pre>${JSON.stringify(data, null, 2)}</pre>
+                </div>
+            `;
+            setTimeout(() => {
+                document.getElementById('exit-status').textContent = 'E Mbyllur';
+                document.getElementById('exit-status').className = 'badge bg-secondary ms-auto';
+            }, 2000);
+        });
+}
+
+function testTicketPrinter() {
+    fetch('/test/api/printer/ticket')
+        .then(response => response.json())
+        .then(data => {
+            document.getElementById('test-output').innerHTML = `
+                <div class="alert alert-success">
+                    <h6>Rezultati i Testit të Printerit të Biletave:</h6>
+                    <pre>${JSON.stringify(data, null, 2)}</pre>
+                </div>
+            `;
+        });
+}
+
+function testReceiptPrinter() {
+    fetch('/test/api/printer/receipt')
+        .then(response => response.json())
+        .then(data => {
+            document.getElementById('test-output').innerHTML = `
+                <div class="alert alert-success">
+                    <h6>Rezultati i Testit të Printerit të Faturave:</h6>
+                    <pre>${JSON.stringify(data, null, 2)}</pre>
+                </div>
+            `;
+        });
+}
+
+function testScanner() {
+    fetch('/test/api/scan')
+        .then(response => response.json())
+        .then(data => {
+            document.getElementById('test-output').innerHTML = `
+                <div class="alert alert-success">
+                    <h6>Rezultati i Testit të Skanerit:</h6>
+                    <pre>${JSON.stringify(data, null, 2)}</pre>
+                </div>
+            `;
+        });
+}
+</script>
+{% endblock %} 

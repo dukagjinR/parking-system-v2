@@ -1,0 +1,312 @@
+{% extends "base.html" %}
+
+{% block title %}Testimi i Kartelave RFID{% endblock %}
+
+{% block content %}
+<div class="container-fluid">
+    <!-- Page Header -->
+    <div class="d-sm-flex align-items-center justify-content-between mb-4">
+        <h1 class="h3 mb-0 text-gray-800">
+            <i class="fas fa-credit-card"></i> Testimi i Kartelave RFID
+        </h1>
+        <a href="{{ url_for('dashboard') }}" class="btn btn-secondary">
+            <i class="fas fa-arrow-left"></i> Kthehu
+        </a>
+    </div>
+
+    <!-- RFID Test Interface -->
+    <div class="row">
+        <div class="col-lg-8">
+            <div class="card shadow">
+                <div class="card-header py-3">
+                    <h6 class="m-0 font-weight-bold text-primary">Testimi i Kartelës RFID</h6>
+                </div>
+                <div class="card-body">
+                    <div class="row">
+                        <div class="col-md-6">
+                            <div class="mb-3">
+                                <label for="cardNumber" class="form-label">
+                                    <i class="fas fa-credit-card"></i> Numri i Kartelës RFID
+                                </label>
+                                <input type="text" class="form-control" id="cardNumber" 
+                                       placeholder="Skanoni ose shkruani numrin e kartelës">
+                            </div>
+                            <div class="d-grid gap-2">
+                                <button type="button" class="btn btn-primary" onclick="checkCard()">
+                                    <i class="fas fa-search"></i> Kontrollo Kartelën
+                                </button>
+                                <button type="button" class="btn btn-success" onclick="testEntry()">
+                                    <i class="fas fa-sign-in-alt"></i> Testo Hyrjen
+                                </button>
+                                <button type="button" class="btn btn-warning" onclick="testExit()">
+                                    <i class="fas fa-sign-out-alt"></i> Testo Daljen
+                                </button>
+                            </div>
+                        </div>
+                        <div class="col-md-6">
+                            <div class="alert alert-info">
+                                <h6><i class="fas fa-info-circle"></i> Udhëzime për Testim</h6>
+                                <ul class="mb-0">
+                                    <li>Shkruani numrin e kartelës RFID</li>
+                                    <li>Klikoni "Kontrollo Kartelën" për të parë statusin</li>
+                                    <li>Përdorni "Testo Hyrjen" për të simuluar hyrjen</li>
+                                    <li>Përdorni "Testo Daljen" për të simuluar daljen</li>
+                                </ul>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <div class="col-lg-4">
+            <div class="card shadow">
+                <div class="card-header py-3">
+                    <h6 class="m-0 font-weight-bold text-primary">Rezultatet e Testit</h6>
+                </div>
+                <div class="card-body">
+                    <div id="testResults">
+                        <div class="text-center text-muted">
+                            <i class="fas fa-credit-card fa-3x mb-3"></i>
+                            <p>Rezultatet e testit do të shfaqen këtu</p>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Card Status Display -->
+    <div class="row mt-4" id="cardStatus" style="display: none;">
+        <div class="col-12">
+            <div class="card shadow">
+                <div class="card-header py-3">
+                    <h6 class="m-0 font-weight-bold text-primary">Informacionet e Kartelës</h6>
+                </div>
+                <div class="card-body">
+                    <div class="row">
+                        <div class="col-md-6">
+                            <table class="table table-borderless">
+                                <tr>
+                                    <td><strong>Numër Kartele:</strong></td>
+                                    <td id="displayCardNumber"></td>
+                                </tr>
+                                <tr>
+                                    <td><strong>Pronari:</strong></td>
+                                    <td id="displayOwnerName"></td>
+                                </tr>
+                                <tr>
+                                    <td><strong>Statusi:</strong></td>
+                                    <td id="displayStatus"></td>
+                                </tr>
+                                <tr>
+                                    <td><strong>Lloji i Pagesës:</strong></td>
+                                    <td id="displayPaymentType"></td>
+                                </tr>
+                            </table>
+                        </div>
+                        <div class="col-md-6">
+                            <table class="table table-borderless">
+                                <tr>
+                                    <td><strong>Data e Fillimit:</strong></td>
+                                    <td id="displayStartDate"></td>
+                                </tr>
+                                <tr>
+                                    <td><strong>Data e Mbarimit:</strong></td>
+                                    <td id="displayEndDate"></td>
+                                </tr>
+                                <tr>
+                                    <td><strong>Hyrjet:</strong></td>
+                                    <td id="displayEntries"></td>
+                                </tr>
+                                <tr>
+                                    <td><strong>Brenda Parkingut:</strong></td>
+                                    <td id="displayIsInside"></td>
+                                </tr>
+                            </table>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}
+
+{% block scripts %}
+<script>
+let currentCard = null;
+
+function checkCard() {
+    const cardNumber = document.getElementById('cardNumber').value.trim();
+    
+    if (!cardNumber) {
+        showAlert('Ju lutem shkruani numrin e kartelës', 'warning');
+        return;
+    }
+    
+    fetch('/api/rfid/check', {
+        method: 'POST',
+        headers: {
+            'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({ card_number: cardNumber })
+    })
+    .then(response => response.json())
+    .then(data => {
+        if (data.success) {
+            currentCard = data.card;
+            displayCardInfo(data.card);
+            showAlert('Kartela u gjet me sukses!', 'success');
+        } else {
+            showAlert(data.message, 'danger');
+            hideCardInfo();
+        }
+    })
+    .catch(error => {
+        showAlert('Gabim në lidhje me serverin', 'danger');
+        console.error('Error:', error);
+    });
+}
+
+function testEntry() {
+    if (!currentCard) {
+        showAlert('Ju lutem kontrolloni një kartelë fillimisht', 'warning');
+        return;
+    }
+    
+    fetch('/api/rfid/entry', {
+        method: 'POST',
+        headers: {
+            'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({ card_number: currentCard.card_number })
+    })
+    .then(response => response.json())
+    .then(data => {
+        if (data.success) {
+            showAlert(data.message, 'success');
+            // Refresh card info
+            checkCard();
+        } else {
+            showAlert(data.message, 'danger');
+        }
+    })
+    .catch(error => {
+        showAlert('Gabim në lidhje me serverin', 'danger');
+        console.error('Error:', error);
+    });
+}
+
+function testExit() {
+    if (!currentCard) {
+        showAlert('Ju lutem kontrolloni një kartelë fillimisht', 'warning');
+        return;
+    }
+    
+    fetch('/api/rfid/exit', {
+        method: 'POST',
+        headers: {
+            'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({ card_number: currentCard.card_number })
+    })
+    .then(response => response.json())
+    .then(data => {
+        if (data.success) {
+            showAlert(data.message, 'success');
+            // Refresh card info
+            checkCard();
+        } else {
+            showAlert(data.message, 'danger');
+        }
+    })
+    .catch(error => {
+        showAlert('Gabim në lidhje me serverin', 'danger');
+        console.error('Error:', error);
+    });
+}
+
+function displayCardInfo(card) {
+    document.getElementById('displayCardNumber').textContent = card.card_number;
+    document.getElementById('displayOwnerName').textContent = card.owner_name;
+    document.getElementById('displayPaymentType').textContent = getPaymentTypeText(card.payment_type);
+    document.getElementById('displayStartDate').textContent = card.start_date;
+    document.getElementById('displayEndDate').textContent = card.end_date;
+    document.getElementById('displayEntries').textContent = `${card.current_entries}/${card.max_entries}`;
+    document.getElementById('displayIsInside').textContent = card.is_inside ? 'Po' : 'Jo';
+    
+    // Set status with appropriate styling
+    const statusElement = document.getElementById('displayStatus');
+    statusElement.textContent = getStatusText(card.status);
+    statusElement.className = getStatusClass(card.status);
+    
+    document.getElementById('cardStatus').style.display = 'block';
+}
+
+function hideCardInfo() {
+    document.getElementById('cardStatus').style.display = 'none';
+    currentCard = null;
+}
+
+function getPaymentTypeText(paymentType) {
+    const types = {
+        '1_month': '1 Muaj',
+        '3_months': '3 Muaj',
+        '6_months': '6 Muaj',
+        '1_year': '1 Vit'
+    };
+    return types[paymentType] || paymentType;
+}
+
+function getStatusText(status) {
+    const statuses = {
+        'active': 'Aktive',
+        'expired': 'E Skaduar',
+        'blocked': 'E Bllokuar'
+    };
+    return statuses[status] || status;
+}
+
+function getStatusClass(status) {
+    const classes = {
+        'active': 'text-success fw-bold',
+        'expired': 'text-warning fw-bold',
+        'blocked': 'text-danger fw-bold'
+    };
+    return classes[status] || '';
+}
+
+function showAlert(message, type) {
+    const alertDiv = document.createElement('div');
+    alertDiv.className = `alert alert-${type} alert-dismissible fade show`;
+    alertDiv.innerHTML = `
+        ${message}
+        <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
+    `;
+    
+    const resultsDiv = document.getElementById('testResults');
+    resultsDiv.innerHTML = '';
+    resultsDiv.appendChild(alertDiv);
+    
+    // Auto-remove after 5 seconds
+    setTimeout(() => {
+        if (alertDiv.parentNode) {
+            alertDiv.remove();
+        }
+    }, 5000);
+}
+
+// Auto-focus on card number input
+document.addEventListener('DOMContentLoaded', function() {
+    document.getElementById('cardNumber').focus();
+});
+
+// Enter key to check card
+document.getElementById('cardNumber').addEventListener('keypress', function(e) {
+    if (e.key === 'Enter') {
+        checkCard();
+    }
+});
+</script>
+{% endblock %} 

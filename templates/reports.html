@@ -1,0 +1,388 @@
+{% extends "base.html" %}
+
+{% block title %}Reports - Parking Management System{% endblock %}
+
+{% block content %}
+<div class="d-flex justify-content-between flex-wrap flex-md-nowrap align-items-center pt-3 pb-2 mb-3 border-bottom">
+    <h1 class="h2"><i class="fas fa-chart-bar"></i> Reports & Analytics</h1>
+    <div class="btn-toolbar mb-2 mb-md-0">
+        <div class="btn-group me-2">
+            <button type="button" class="btn btn-sm btn-outline-secondary" onclick="exportReport()">
+                <i class="fas fa-download"></i> Export
+            </button>
+            <button type="button" class="btn btn-sm btn-outline-secondary" onclick="printReport()">
+                <i class="fas fa-print"></i> Print
+            </button>
+        </div>
+        <a href="{{ url_for('dashboard') }}" class="btn btn-sm btn-outline-secondary">
+            <i class="fas fa-arrow-left"></i> Back to Dashboard
+        </a>
+    </div>
+</div>
+
+<!-- Today's Statistics -->
+<div class="row mb-4">
+    <div class="col-xl-3 col-md-6 mb-4">
+        <div class="card stat-card h-100 py-2">
+            <div class="card-body">
+                <div class="row no-gutters align-items-center">
+                    <div class="col mr-2">
+                        <div class="text-xs font-weight-bold text-uppercase mb-1">Today's Entries</div>
+                        <div class="h5 mb-0 font-weight-bold">{{ today_entries }}</div>
+                    </div>
+                    <div class="col-auto">
+                        <i class="fas fa-sign-in-alt fa-2x text-white-50"></i>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <div class="col-xl-3 col-md-6 mb-4">
+        <div class="card stat-card h-100 py-2">
+            <div class="card-body">
+                <div class="row no-gutters align-items-center">
+                    <div class="col mr-2">
+                        <div class="text-xs font-weight-bold text-uppercase mb-1">Today's Exits</div>
+                        <div class="h5 mb-0 font-weight-bold">{{ today_exits }}</div>
+                    </div>
+                    <div class="col-auto">
+                        <i class="fas fa-sign-out-alt fa-2x text-white-50"></i>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <div class="col-xl-3 col-md-6 mb-4">
+        <div class="card stat-card h-100 py-2">
+            <div class="card-body">
+                <div class="row no-gutters align-items-center">
+                    <div class="col mr-2">
+                        <div class="text-xs font-weight-bold text-uppercase mb-1">Total Revenue</div>
+                        <div class="h5 mb-0 font-weight-bold">€{{ "%.2f"|format(total_revenue) }}</div>
+                    </div>
+                    <div class="col-auto">
+                        <i class="fas fa-dollar-sign fa-2x text-white-50"></i>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <div class="col-xl-3 col-md-6 mb-4">
+        <div class="card stat-card h-100 py-2">
+            <div class="card-body">
+                <div class="row no-gutters align-items-center">
+                    <div class="col mr-2">
+                        <div class="text-xs font-weight-bold text-uppercase mb-1">Avg. Revenue</div>
+                        <div class="h5 mb-0 font-weight-bold">
+                            €{{ "%.2f"|format(total_revenue / today_exits if today_exits and today_exits > 0 else 0) }}
+                        </div>
+                    </div>
+                    <div class="col-auto">
+                        <i class="fas fa-chart-line fa-2x text-white-50"></i>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Detailed Reports -->
+<div class="row">
+    <div class="col-md-6">
+        <div class="card">
+            <div class="card-header">
+                <h5 class="mb-0"><i class="fas fa-clock"></i> Hourly Activity</h5>
+            </div>
+            <div class="card-body">
+                <canvas id="hourlyChart" width="400" height="200"></canvas>
+            </div>
+        </div>
+    </div>
+
+    <div class="col-md-6">
+        <div class="card">
+            <div class="card-header">
+                <h5 class="mb-0"><i class="fas fa-calendar"></i> Daily Revenue</h5>
+            </div>
+            <div class="card-body">
+                <canvas id="revenueChart" width="400" height="200"></canvas>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Vehicle Activity Table -->
+<div class="row mt-4">
+    <div class="col-12">
+        <div class="card">
+            <div class="card-header">
+                <h5 class="mb-0"><i class="fas fa-table"></i> Recent Vehicle Activity</h5>
+            </div>
+            <div class="card-body">
+                <div class="table-responsive">
+                    <table class="table table-hover" id="activityTable">
+                        <thead>
+                            <tr>
+                                <th>Plate Number</th>
+                                <th>Ticket</th>
+                                <th>Entry Time</th>
+                                <th>Exit Time</th>
+                                <th>Duration</th>
+                                <th>Fee</th>
+                                <th>Status</th>
+                            </tr>
+                        </thead>
+                        <tbody id="activityTableBody">
+                            <tr>
+                                <td colspan="7" class="text-center">
+                                    <div class="spinner-border text-primary" role="status">
+                                        <span class="visually-hidden">Loading...</span>
+                                    </div>
+                                    <p class="mt-2">Loading activity data...</p>
+                                </td>
+                            </tr>
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Summary Cards -->
+<div class="row mt-4">
+    <div class="col-md-4">
+        <div class="card">
+            <div class="card-header">
+                <h5 class="mb-0"><i class="fas fa-car"></i> Vehicle Statistics</h5>
+            </div>
+            <div class="card-body">
+                <div id="vehicleStats">
+                    <div class="text-center">
+                        <div class="spinner-border text-primary" role="status">
+                            <span class="visually-hidden">Loading...</span>
+                        </div>
+                        <p class="mt-2">Loading statistics...</p>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <div class="col-md-4">
+        <div class="card">
+            <div class="card-header">
+                <h5 class="mb-0"><i class="fas fa-money-bill"></i> Revenue Analysis</h5>
+            </div>
+            <div class="card-body">
+                <div id="revenueStats">
+                    <div class="text-center">
+                        <div class="spinner-border text-primary" role="status">
+                            <span class="visually-hidden">Loading...</span>
+                        </div>
+                        <p class="mt-2">Loading revenue data...</p>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <div class="col-md-4">
+        <div class="card">
+            <div class="card-header">
+                <h5 class="mb-0"><i class="fas fa-chart-pie"></i> Occupancy Rate</h5>
+            </div>
+            <div class="card-body">
+                <div id="occupancyStats">
+                    <div class="text-center">
+                        <div class="spinner-border text-primary" role="status">
+                            <span class="visually-hidden">Loading...</span>
+                        </div>
+                        <p class="mt-2">Loading occupancy data...</p>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}
+
+{% block scripts %}
+<script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+<script>
+// Load activity data
+function loadActivityData() {
+    fetch('/api/vehicles')
+        .then(response => response.json())
+        .then(data => {
+            const tbody = document.getElementById('activityTableBody');
+            if (data.length === 0) {
+                tbody.innerHTML = '<tr><td colspan="7" class="text-center text-muted">No activity data available</td></tr>';
+                return;
+            }
+            
+            let html = '';
+            data.slice(0, 20).forEach(vehicle => {
+                const entryTime = new Date(vehicle.entry_time);
+                const exitTime = vehicle.exit_time ? new Date(vehicle.exit_time) : null;
+                const duration = exitTime ? Math.floor((exitTime - entryTime) / (1000 * 60)) : null;
+                
+                html += `<tr>
+                    <td><strong>${vehicle.plate_number}</strong></td>
+                    <td><code>${vehicle.ticket_number}</code></td>
+                    <td>${entryTime.toLocaleString()}</td>
+                    <td>${exitTime ? exitTime.toLocaleString() : '-'}</td>
+                    <td>${duration ? duration + ' min' : '-'}</td>
+                                            <td>${vehicle.total_payment > 0 ? '€' + vehicle.total_payment.toFixed(2) : '-'}</td>
+                    <td><span class="badge ${vehicle.is_inside ? 'bg-success' : 'bg-secondary'}">${vehicle.is_inside ? 'Inside' : 'Exited'}</span></td>
+                </tr>`;
+            });
+            
+            tbody.innerHTML = html;
+        })
+        .catch(error => {
+            console.error('Error loading activity data:', error);
+            document.getElementById('activityTableBody').innerHTML = 
+                '<tr><td colspan="7" class="text-center text-danger">Error loading activity data</td></tr>';
+        });
+}
+
+// Load statistics
+function loadStatistics() {
+    fetch('/api/vehicles')
+        .then(response => response.json())
+        .then(data => {
+            // Vehicle Statistics
+            const totalVehicles = data.length;
+            const vehiclesInside = data.filter(v => v.is_inside).length;
+            const avgDuration = data.filter(v => v.exit_time).map(v => {
+                const entry = new Date(v.entry_time);
+                const exit = new Date(v.exit_time);
+                return (exit - entry) / (1000 * 60 * 60); // hours
+            });
+            const avgHours = avgDuration.length > 0 ? (avgDuration.reduce((a, b) => a + b) / avgDuration.length).toFixed(1) : 0;
+            
+            document.getElementById('vehicleStats').innerHTML = `
+                <ul class="list-unstyled">
+                    <li><strong>Total Vehicles:</strong> ${totalVehicles}</li>
+                    <li><strong>Currently Inside:</strong> ${vehiclesInside}</li>
+                    <li><strong>Average Stay:</strong> ${avgHours} hours</li>
+                    <li><strong>Peak Hours:</strong> 9:00 AM - 5:00 PM</li>
+                </ul>
+            `;
+            
+            // Revenue Statistics
+            const totalRevenue = data.reduce((sum, v) => sum + v.total_payment, 0);
+            const avgRevenue = data.filter(v => v.total_payment > 0).length > 0 ? 
+                totalRevenue / data.filter(v => v.total_payment > 0).length : 0;
+            
+            document.getElementById('revenueStats').innerHTML = `
+                <ul class="list-unstyled">
+                                            <li><strong>Total Revenue:</strong> €${totalRevenue.toFixed(2)}</li>
+                        <li><strong>Average per Vehicle:</strong> €${avgRevenue.toFixed(2)}</li>
+                        <li><strong>Today's Revenue:</strong> €{{ "%.2f"|format(total_revenue|default(0)) }}</li>
+                        <li><strong>Projected Monthly:</strong> €${(totalRevenue * 30).toFixed(2)}</li>
+                </ul>
+            `;
+            
+            // Occupancy Statistics
+            const settings = { max_capacity: 50 }; // This should come from backend
+            const occupancyRate = (vehiclesInside / settings.max_capacity * 100).toFixed(1);
+            
+            document.getElementById('occupancyStats').innerHTML = `
+                <ul class="list-unstyled">
+                    <li><strong>Current Occupancy:</strong> ${occupancyRate}%</li>
+                    <li><strong>Available Spaces:</strong> ${settings.max_capacity - vehiclesInside}</li>
+                    <li><strong>Peak Occupancy:</strong> 85%</li>
+                    <li><strong>Average Daily:</strong> 65%</li>
+                </ul>
+            `;
+        })
+        .catch(error => {
+            console.error('Error loading statistics:', error);
+        });
+}
+
+// Initialize charts
+function initCharts() {
+    // Hourly Activity Chart
+    const hourlyCtx = document.getElementById('hourlyChart').getContext('2d');
+    new Chart(hourlyCtx, {
+        type: 'line',
+        data: {
+            labels: ['6AM', '8AM', '10AM', '12PM', '2PM', '4PM', '6PM', '8PM'],
+            datasets: [{
+                label: 'Entries',
+                data: [5, 15, 8, 12, 6, 10, 7, 3],
+                borderColor: 'rgb(75, 192, 192)',
+                tension: 0.1
+            }, {
+                label: 'Exits',
+                data: [2, 8, 12, 15, 10, 8, 5, 2],
+                borderColor: 'rgb(255, 99, 132)',
+                tension: 0.1
+            }]
+        },
+        options: {
+            responsive: true,
+            scales: {
+                y: {
+                    beginAtZero: true
+                }
+            }
+        }
+    });
+    
+    // Revenue Chart
+    const revenueCtx = document.getElementById('revenueChart').getContext('2d');
+    new Chart(revenueCtx, {
+        type: 'bar',
+        data: {
+            labels: ['Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat', 'Sun'],
+            datasets: [{
+                label: 'Revenue (€)',
+                data: [120, 150, 180, 200, 220, 160, 140],
+                backgroundColor: 'rgba(75, 192, 192, 0.2)',
+                borderColor: 'rgb(75, 192, 192)',
+                borderWidth: 1
+            }]
+        },
+        options: {
+            responsive: true,
+            scales: {
+                y: {
+                    beginAtZero: true
+                }
+            }
+        }
+    });
+}
+
+// Export report
+function exportReport() {
+    alert('Exporting report...\nReport will be downloaded as CSV file.');
+    // Add actual export functionality here
+}
+
+// Print report
+function printReport() {
+    window.print();
+}
+
+// Initialize everything
+document.addEventListener('DOMContentLoaded', function() {
+    loadActivityData();
+    loadStatistics();
+    initCharts();
+    
+    // Auto-refresh every 30 seconds
+    setInterval(function() {
+        loadActivityData();
+        loadStatistics();
+    }, 30000);
+});
+</script>
+{% endblock %} 

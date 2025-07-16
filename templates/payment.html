@@ -1,0 +1,265 @@
+{% extends "base.html" %}
+
+{% block title %}Kabina e Pagesave - Sistemi i Menaxhimit të Parkingut{% endblock %}
+
+{% block content %}
+<div class="d-flex justify-content-between flex-wrap flex-md-nowrap align-items-center pt-3 pb-2 mb-3 border-bottom">
+    <h1 class="h2"><i class="fas fa-credit-card"></i> Kabina e Pagesave</h1>
+    <div class="btn-toolbar mb-2 mb-md-0">
+        <a href="{{ url_for('dashboard') }}" class="btn btn-sm btn-outline-secondary">
+            <i class="fas fa-arrow-left"></i> Kthehu në Dashboard
+        </a>
+    </div>
+</div>
+
+<div class="row">
+    <div class="col-md-8">
+        <div class="card">
+            <div class="card-header">
+                <h5 class="mb-0"><i class="fas fa-search me-2"></i>Kërko Biletën</h5>
+            </div>
+            <div class="card-body">
+                <form id="ticket-search-form">
+                    <div class="mb-3">
+                        <label for="ticket_number" class="form-label">Numri i Biletës</label>
+                        <div class="input-group">
+                            <input type="text" class="form-control" id="ticket_number" 
+                                   placeholder="Shkruani numrin e biletës" required>
+                            <button type="submit" class="btn btn-primary">
+                                <i class="fas fa-search"></i> Kërko
+                            </button>
+                        </div>
+                    </div>
+                </form>
+                
+                <div id="ticket-info" style="display: none;">
+                    <hr>
+                    <h6>Informacioni i Biletës:</h6>
+                    <div class="row">
+                        <div class="col-md-6">
+                            <p><strong>Bileta:</strong> <span id="ticket-id"></span></p>
+                            <p><strong>Targa:</strong> <span id="plate-number"></span></p>
+                            <p><strong>Hyrja:</strong> <span id="entry-time"></span></p>
+                        </div>
+                        <div class="col-md-6">
+                            <p><strong>Koha e qëndrimit:</strong> <span id="duration"></span></p>
+                            <p><strong>Tarifa:</strong> <span id="fee" class="text-primary fw-bold"></span></p>
+                            <p><strong>Statusi:</strong> <span id="status"></span></p>
+                        </div>
+                    </div>
+                    
+                    <div id="payment-section" style="display: none;">
+                        <hr>
+                        <h6>Kryej Pagesën:</h6>
+                        <form id="payment-form">
+                            <div class="row">
+                                <div class="col-md-6">
+                                    <div class="mb-3">
+                                        <label for="payment_method" class="form-label">Metoda e Pagesës</label>
+                                        <select class="form-select" id="payment_method" required>
+                                            <option value="cash">Para në dorë</option>
+                                            <option value="card">Kartë</option>
+                                            <option value="mobile">Mobile Banking</option>
+                                        </select>
+                                    </div>
+                                </div>
+                                <div class="col-md-6">
+                                    <div class="mb-3">
+                                        <label for="amount_paid" class="form-label">Shuma e Paguar (€)</label>
+                                        <input type="number" class="form-control" id="amount_paid" 
+                                               step="0.01" required>
+                                    </div>
+                                </div>
+                            </div>
+                            <button type="submit" class="btn btn-success">
+                                <i class="fas fa-check"></i> Konfirmo Pagesën
+                            </button>
+                        </form>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+    
+    <div class="col-md-4">
+        <div class="card">
+            <div class="card-header">
+                <h5 class="mb-0"><i class="fas fa-list me-2"></i>Biletat e Papaguara</h5>
+            </div>
+            <div class="card-body">
+                {% if unpaid_tickets %}
+                <div class="list-group">
+                    {% for ticket in unpaid_tickets %}
+                    <div class="list-group-item">
+                        <div class="d-flex justify-content-between align-items-center">
+                            <div>
+                                <h6 class="mb-1">{{ ticket.ticket_number }}</h6>
+                                <small class="text-muted">{{ ticket.plate_number }}</small>
+                            </div>
+                            <button class="btn btn-sm btn-primary" onclick="loadTicket('{{ ticket.ticket_number }}')">
+                                <i class="fas fa-credit-card"></i> Paguaj
+                            </button>
+                        </div>
+                        <small class="text-muted">
+                            Hyrja: {{ ticket.entry_time.strftime('%H:%M') }} | 
+                            Koha: {{ ((datetime.now() - ticket.entry_time).total_seconds() / 3600) | round(1) }} orë
+                        </small>
+                    </div>
+                    {% endfor %}
+                </div>
+                {% else %}
+                <p class="text-muted">Nuk ka bileta të papaguara</p>
+                {% endif %}
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Recent Payments -->
+<div class="row mt-4">
+    <div class="col-12">
+        <div class="card">
+            <div class="card-header">
+                <h5 class="mb-0"><i class="fas fa-history me-2"></i>Pagesat e Fundit</h5>
+            </div>
+            <div class="card-body">
+                <div class="table-responsive">
+                    <table class="table table-hover">
+                        <thead>
+                            <tr>
+                                <th>Koha</th>
+                                <th>Bileta</th>
+                                <th>Targa</th>
+                                <th>Tarifa (€)</th>
+                                <th>Metoda</th>
+                                <th>Statusi</th>
+                            </tr>
+                        </thead>
+                        <tbody id="recent-payments">
+                            <!-- Will be populated by JavaScript -->
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}
+
+{% block scripts %}
+<script>
+let currentTicket = null;
+
+document.getElementById('ticket-search-form').addEventListener('submit', function(e) {
+    e.preventDefault();
+    const ticketNumber = document.getElementById('ticket_number').value;
+    loadTicket(ticketNumber);
+});
+
+function loadTicket(ticketNumber) {
+    fetch('/api/vehicles')
+        .then(response => response.json())
+        .then(vehicles => {
+            const vehicle = vehicles.find(v => v.ticket_number === ticketNumber);
+            if (vehicle && vehicle.is_inside) {
+                displayTicketInfo(vehicle);
+                currentTicket = vehicle;
+            } else {
+                alert('Bileta nuk u gjet ose automjeti ka dalë tashmë');
+            }
+        });
+}
+
+function displayTicketInfo(vehicle) {
+    const entryTime = new Date(vehicle.entry_time);
+    const now = new Date();
+    const durationHours = (now - entryTime) / (1000 * 60 * 60);
+    
+    document.getElementById('ticket-id').textContent = vehicle.ticket_number;
+    document.getElementById('plate-number').textContent = vehicle.plate_number;
+    document.getElementById('entry-time').textContent = entryTime.toLocaleString('sq-AL');
+    document.getElementById('duration').textContent = `${durationHours.toFixed(1)} orë`;
+    
+    // Calculate fee
+    const fee = Math.max(2.0, durationHours * 2.0); // Minimum €2, €2/hour
+    document.getElementById('fee').textContent = `€${fee.toFixed(2)}`;
+    
+    const statusBadge = vehicle.payment_status === 'paid' ? 
+        '<span class="badge bg-success">E Paguar</span>' : 
+        '<span class="badge bg-warning">E Papaguar</span>';
+    document.getElementById('status').innerHTML = statusBadge;
+    
+    document.getElementById('ticket-info').style.display = 'block';
+    
+    if (vehicle.payment_status === 'unpaid') {
+        document.getElementById('payment-section').style.display = 'block';
+        document.getElementById('amount_paid').value = fee.toFixed(2);
+    } else {
+        document.getElementById('payment-section').style.display = 'none';
+    }
+}
+
+document.getElementById('payment-form').addEventListener('submit', function(e) {
+    e.preventDefault();
+    
+    if (!currentTicket) {
+        alert('Ju lutem zgjidhni një bileta');
+        return;
+    }
+    
+    const paymentMethod = document.getElementById('payment_method').value;
+    const amountPaid = parseFloat(document.getElementById('amount_paid').value);
+    
+    fetch('/api/pay_ticket', {
+        method: 'POST',
+        headers: {
+            'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({
+            ticket_number: currentTicket.ticket_number,
+            payment_method: paymentMethod
+        })
+    })
+    .then(response => response.json())
+    .then(data => {
+        if (data.success) {
+            alert('Pagesa u krye me sukses!');
+            location.reload();
+        } else {
+            alert('Gabim: ' + data.message);
+        }
+    })
+    .catch(error => {
+        alert('Gabim në komunikim me serverin');
+        console.error('Error:', error);
+    });
+});
+
+// Load recent payments
+function loadRecentPayments() {
+    fetch('/api/vehicles')
+        .then(response => response.json())
+        .then(vehicles => {
+            const paidVehicles = vehicles.filter(v => v.payment_status === 'paid' || v.payment_status === 'used');
+            const tbody = document.getElementById('recent-payments');
+            tbody.innerHTML = '';
+            
+            paidVehicles.slice(0, 10).forEach(vehicle => {
+                const row = document.createElement('tr');
+                row.innerHTML = `
+                    <td>${new Date(vehicle.payment_time || vehicle.exit_time).toLocaleString('sq-AL')}</td>
+                    <td><span class="badge bg-primary">${vehicle.ticket_number}</span></td>
+                    <td>${vehicle.plate_number}</td>
+                    <td><strong>€${vehicle.total_payment.toFixed(2)}</strong></td>
+                    <td>${vehicle.payment_method || 'cash'}</td>
+                    <td><span class="badge bg-success">${vehicle.payment_status}</span></td>
+                `;
+                tbody.appendChild(row);
+            });
+        });
+}
+
+// Load recent payments on page load
+loadRecentPayments();
+</script>
+{% endblock %} 

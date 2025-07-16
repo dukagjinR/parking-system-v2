@@ -1,0 +1,219 @@
+{% extends "base.html" %}
+
+{% block title %}Edito Përdoruesin{% endblock %}
+
+{% block content %}
+<div class="container-fluid">
+    <!-- Page Header -->
+    <div class="d-sm-flex align-items-center justify-content-between mb-4">
+        <h1 class="h3 mb-0 text-gray-800">
+            <i class="fas fa-user-edit"></i> Edito Përdoruesin: {{ user.username }}
+        </h1>
+        <a href="{{ url_for('users') }}" class="btn btn-secondary">
+            <i class="fas fa-arrow-left"></i> Kthehu
+        </a>
+    </div>
+
+    <!-- Flash Messages -->
+    {% with messages = get_flashed_messages(with_categories=true) %}
+        {% if messages %}
+            {% for category, message in messages %}
+                <div class="alert alert-{{ 'danger' if category == 'error' else category }} alert-dismissible fade show" role="alert">
+                    {{ message }}
+                    <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
+                </div>
+            {% endfor %}
+        {% endif %}
+    {% endwith %}
+
+    <!-- Edit User Form -->
+    <div class="row justify-content-center">
+        <div class="col-lg-8">
+            <div class="card shadow">
+                <div class="card-header py-3">
+                    <h6 class="m-0 font-weight-bold text-primary">
+                        <i class="fas fa-info-circle"></i> Informacionet e Përdoruesit
+                    </h6>
+                </div>
+                <div class="card-body">
+                    <form method="POST">
+                        <div class="row">
+                            <div class="col-md-6">
+                                <div class="mb-3">
+                                    <label for="username" class="form-label">
+                                        <i class="fas fa-user"></i> Emri i Përdoruesit *
+                                    </label>
+                                    <input type="text" class="form-control" id="username" name="username" 
+                                           value="{{ user.username }}" required>
+                                    <div class="form-text">
+                                        Emri i përdoruesit duhet të jetë unik.
+                                    </div>
+                                </div>
+                            </div>
+                            
+                            <div class="col-md-6">
+                                <div class="mb-3">
+                                    <label for="name" class="form-label">
+                                        <i class="fas fa-id-card"></i> Emri i Plotë
+                                    </label>
+                                    <input type="text" class="form-control" id="name" name="name" 
+                                           value="{{ user.name or '' }}" placeholder="Shkruani emrin e plotë">
+                                    <div class="form-text">
+                                        Emri i plotë i përdoruesit për identifikim.
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+
+                        <div class="row">
+                            <div class="col-md-6">
+                                <div class="mb-3">
+                                    <label for="password" class="form-label">
+                                        <i class="fas fa-lock"></i> Fjalëkalimi i Ri
+                                    </label>
+                                    <div class="input-group">
+                                        <input type="password" class="form-control" id="password" name="password" 
+                                               placeholder="Lëreni bosh për të mbajtur fjalëkalimin aktual">
+                                        <button class="btn btn-outline-secondary" type="button" 
+                                                onclick="togglePassword('password')">
+                                            <i class="fas fa-eye" id="passwordIcon"></i>
+                                        </button>
+                                    </div>
+                                    <div class="form-text">
+                                        Lëreni bosh për të mbajtur fjalëkalimin aktual.
+                                    </div>
+                                </div>
+                            </div>
+                            
+                            <div class="col-md-6">
+                                <div class="mb-3">
+                                    <label for="confirm_password" class="form-label">
+                                        <i class="fas fa-lock"></i> Konfirmo Fjalëkalimin e Ri
+                                    </label>
+                                    <div class="input-group">
+                                        <input type="password" class="form-control" id="confirm_password" 
+                                               name="confirm_password" placeholder="Përsërit fjalëkalimin e ri">
+                                        <button class="btn btn-outline-secondary" type="button" 
+                                                onclick="togglePassword('confirm_password')">
+                                            <i class="fas fa-eye" id="confirmPasswordIcon"></i>
+                                        </button>
+                                    </div>
+                                    <div class="form-text">
+                                        Përsërit fjalëkalimin e ri për konfirmim.
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+
+                        <div class="row">
+                            <div class="col-md-6">
+                                <div class="mb-3">
+                                    <label for="role" class="form-label">
+                                        <i class="fas fa-user-tag"></i> Roli *
+                                    </label>
+                                    <select class="form-select" id="role" name="role" required>
+                                        <option value="operator" {% if user.role == 'operator' %}selected{% endif %}>Operator</option>
+                                        <option value="admin" {% if user.role == 'admin' %}selected{% endif %}>Administrator</option>
+                                    </select>
+                                    <div class="form-text">
+                                        Roli përcakton të drejtat e përdoruesit në sistem.
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+
+                        <!-- Current User Info -->
+                        <div class="row">
+                            <div class="col-12">
+                                <div class="alert alert-info">
+                                    <h6><i class="fas fa-info-circle"></i> Informacion për Përdoruesin:</h6>
+                                    <ul class="mb-0">
+                                        <li><strong>ID:</strong> {{ user.id }}</li>
+                                        <li><strong>Emri i Përdoruesit:</strong> {{ user.username }}</li>
+                                        <li><strong>Roli Aktual:</strong> 
+                                            {% if user.role == 'admin' %}
+                                                <span class="badge bg-danger">Administrator</span>
+                                            {% else %}
+                                                <span class="badge bg-primary">Operator</span>
+                                            {% endif %}
+                                        </li>
+                                        <li><strong>Krijuar:</strong> {{ user.id }} (ID)</li>
+                                    </ul>
+                                </div>
+                            </div>
+                        </div>
+
+                        <!-- Role Information -->
+                        <div class="row">
+                            <div class="col-12">
+                                <div class="alert alert-warning">
+                                    <h6><i class="fas fa-exclamation-triangle"></i> Informacion për Rolet:</h6>
+                                    <ul class="mb-0">
+                                        <li><strong>Operator:</strong> Mund të menaxhojë hyrjet/daljet dhe pagesat</li>
+                                        <li><strong>Administrator:</strong> Ka të drejta të plota në sistem, përfshirë menaxhimin e përdoruesve</li>
+                                    </ul>
+                                </div>
+                            </div>
+                        </div>
+
+                        <div class="row">
+                            <div class="col-12">
+                                <div class="d-flex justify-content-between">
+                                    <a href="{{ url_for('users') }}" class="btn btn-secondary">
+                                        <i class="fas fa-times"></i> Anulo
+                                    </a>
+                                    <button type="submit" class="btn btn-primary">
+                                        <i class="fas fa-save"></i> Ruaj Ndryshimet
+                                    </button>
+                                </div>
+                            </div>
+                        </div>
+                    </form>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}
+
+{% block scripts %}
+<script>
+function togglePassword(fieldId) {
+    const field = document.getElementById(fieldId);
+    const icon = document.getElementById(fieldId === 'password' ? 'passwordIcon' : 'confirmPasswordIcon');
+    
+    if (field.type === 'password') {
+        field.type = 'text';
+        icon.classList.remove('fa-eye');
+        icon.classList.add('fa-eye-slash');
+    } else {
+        field.type = 'password';
+        icon.classList.remove('fa-eye-slash');
+        icon.classList.add('fa-eye');
+    }
+}
+
+// Password confirmation validation
+document.getElementById('confirm_password').addEventListener('input', function() {
+    const password = document.getElementById('password').value;
+    const confirmPassword = this.value;
+    
+    if (password && confirmPassword && password !== confirmPassword) {
+        this.setCustomValidity('Fjalëkalimet nuk përputhen');
+    } else {
+        this.setCustomValidity('');
+    }
+});
+
+document.getElementById('password').addEventListener('input', function() {
+    const confirmPassword = document.getElementById('confirm_password');
+    if (this.value && confirmPassword.value) {
+        if (this.value !== confirmPassword.value) {
+            confirmPassword.setCustomValidity('Fjalëkalimet nuk përputhen');
+        } else {
+            confirmPassword.setCustomValidity('');
+        }
+    }
+});
+</script>
+{% endblock %} 

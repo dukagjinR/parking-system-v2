@@ -1,0 +1,124 @@
+{% extends "base.html" %}
+
+{% block title %}Dashboard i Testimit{% endblock %}
+
+{% block content %}
+<div class="container mt-4">
+    <div class="row">
+        <div class="col-12">
+            <h1 class="mb-4">🧪 Dashboard i Testimit</h1>
+            <div class="alert alert-info">
+                <strong>Mjedisi i Testimit Aktiv</strong> - Të gjitha funksionet e harduerit janë simuluar
+            </div>
+        </div>
+    </div>
+
+    <div class="row">
+        <div class="col-md-6">
+            <div class="card">
+                <div class="card-header">
+                    <h5>🔧 Testet e Harduerit</h5>
+                </div>
+                <div class="card-body">
+                    <div class="list-group">
+                        <a href="/test/api/barrier/entry" class="list-group-item list-group-item-action">
+                            <i class="fas fa-door-open"></i> Testo Barrierën e Hyrjes
+                        </a>
+                        <a href="/test/api/barrier/exit" class="list-group-item list-group-item-action">
+                            <i class="fas fa-door-open"></i> Testo Barrierën e Daljes
+                        </a>
+                        <a href="/test/api/printer/ticket" class="list-group-item list-group-item-action">
+                            <i class="fas fa-print"></i> Testo Printerin e Biletave
+                        </a>
+                        <a href="/test/api/printer/receipt" class="list-group-item list-group-item-action">
+                            <i class="fas fa-print"></i> Testo Printerin e Faturave
+                        </a>
+                        <a href="/test/api/camera/capture" class="list-group-item list-group-item-action">
+                            <i class="fas fa-camera"></i> Testo Kapjen e Kamerës
+                        </a>
+                        <a href="/test/api/scan" class="list-group-item list-group-item-action">
+                            <i class="fas fa-barcode"></i> Testo Skanerin e Barcode
+                        </a>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <div class="col-md-6">
+            <div class="card">
+                <div class="card-header">
+                    <h5>📋 Faqet e Testimit</h5>
+                </div>
+                <div class="card-body">
+                    <div class="list-group">
+                        <a href="/test/entry" class="list-group-item list-group-item-action">
+                            <i class="fas fa-sign-in-alt"></i> Forma e Testimit të Hyrjes
+                        </a>
+                        <a href="/test/exit" class="list-group-item list-group-item-action">
+                            <i class="fas fa-sign-out-alt"></i> Forma e Testimit të Daljes
+                        </a>
+                        <a href="/test/hardware" class="list-group-item list-group-item-action">
+                            <i class="fas fa-cogs"></i> Statusi i Harduerit
+                        </a>
+                        <a href="/" class="list-group-item list-group-item-action">
+                            <i class="fas fa-home"></i> Dashboard Kryesor
+                        </a>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <div class="row mt-4">
+        <div class="col-12">
+            <div class="card">
+                <div class="card-header">
+                    <h5>📊 Rezultatet e Testimit</h5>
+                </div>
+                <div class="card-body">
+                    <div id="test-results">
+                        <p class="text-muted">Klikoni në çdo test më sipër për të parë rezultatet këtu</p>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<script>
+// Add click handlers for test links
+document.addEventListener('DOMContentLoaded', function() {
+    const testLinks = document.querySelectorAll('a[href^="/test/api/"]');
+    
+    testLinks.forEach(link => {
+        link.addEventListener('click', function(e) {
+            e.preventDefault();
+            
+            const url = this.href;
+            const resultsDiv = document.getElementById('test-results');
+            
+            resultsDiv.innerHTML = '<div class="text-center"><i class="fas fa-spinner fa-spin"></i> Duke testuar...</div>';
+            
+            fetch(url)
+                .then(response => response.json())
+                .then(data => {
+                    resultsDiv.innerHTML = `
+                        <div class="alert alert-success">
+                            <h6>Rezultati i Testit:</h6>
+                            <pre>${JSON.stringify(data, null, 2)}</pre>
+                        </div>
+                    `;
+                })
+                .catch(error => {
+                    resultsDiv.innerHTML = `
+                        <div class="alert alert-danger">
+                            <h6>Gabim në Test:</h6>
+                            <pre>${error.message}</pre>
+                        </div>
+                    `;
+                });
+        });
+    });
+});
+</script>
+{% endblock %} 

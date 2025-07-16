@@ -1,0 +1,9 @@
+Flask==2.2.5
+Flask-SQLAlchemy==3.0.2
+Pillow==9.5.0
+opencv-python==4.7.0.72
+pyzbar==0.1.9
+qrcode==7.4.2
+python-dateutil==2.8.2
+Werkzeug==2.2.3
+gunicorn==20.1.0 

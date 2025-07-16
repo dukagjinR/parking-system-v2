@@ -1,0 +1,230 @@
+{% extends "base.html" %}
+
+{% block title %}Settings - Parking Management System{% endblock %}
+
+{% block content %}
+<div class="d-flex justify-content-between flex-wrap flex-md-nowrap align-items-center pt-3 pb-2 mb-3 border-bottom">
+    <h1 class="h2"><i class="fas fa-cog"></i> System Settings</h1>
+    <div class="btn-toolbar mb-2 mb-md-0">
+        <a href="{{ url_for('dashboard') }}" class="btn btn-sm btn-outline-secondary">
+            <i class="fas fa-arrow-left"></i> Back to Dashboard
+        </a>
+    </div>
+</div>
+
+<div class="row">
+    <div class="col-md-8">
+        <div class="card">
+            <div class="card-header">
+                <h5 class="mb-0"><i class="fas fa-edit"></i> Parking Configuration</h5>
+            </div>
+            <div class="card-body">
+                <form method="POST">
+                    <div class="row">
+                        <div class="col-md-6">
+                            <div class="mb-3">
+                                <label for="hourly_rate" class="form-label">Tarifa Për Orë (€)</label>
+                                <input type="number" class="form-control" id="hourly_rate" name="hourly_rate" 
+                                       value="{{ settings.hourly_rate }}" step="0.01" min="0" required>
+                                <div class="form-text">Cost per hour of parking</div>
+                            </div>
+                        </div>
+                        <div class="col-md-6">
+                            <div class="mb-3">
+                                <label for="daily_rate" class="form-label">Tarifa Ditore (€)</label>
+                                <input type="number" class="form-control" id="daily_rate" name="daily_rate" 
+                                       value="{{ settings.daily_rate }}" step="0.01" min="0" required>
+                                <div class="form-text">Maximum daily rate (24+ hours)</div>
+                            </div>
+                        </div>
+                    </div>
+                    
+                    <div class="mb-3">
+                        <label for="max_capacity" class="form-label">Maximum Parking Capacity</label>
+                        <input type="number" class="form-control" id="max_capacity" name="max_capacity" 
+                               value="{{ settings.max_capacity }}" min="1" required>
+                        <div class="form-text">Maximum number of vehicles allowed in parking</div>
+                    </div>
+                    
+                    <hr>
+                    
+                    <h6><i class="fas fa-video"></i> Camera Settings</h6>
+                    <div class="row">
+                        <div class="col-md-6">
+                            <div class="mb-3">
+                                <label for="camera_ip" class="form-label">Camera IP Address</label>
+                                <input type="text" class="form-control" id="camera_ip" name="camera_ip" 
+                                       value="{{ settings.camera_ip }}" placeholder="192.168.1.100">
+                                <div class="form-text">IP address of the IP camera</div>
+                            </div>
+                        </div>
+                        <div class="col-md-6">
+                            <div class="mb-3">
+                                <label for="camera_username" class="form-label">Camera Username</label>
+                                <input type="text" class="form-control" id="camera_username" name="camera_username" 
+                                       value="{{ settings.camera_username }}" placeholder="admin">
+                                <div class="form-text">Username for camera authentication</div>
+                            </div>
+                        </div>
+                    </div>
+                    
+                    <div class="mb-3">
+                        <label for="camera_password" class="form-label">Camera Password</label>
+                        <input type="password" class="form-control" id="camera_password" name="camera_password" 
+                               value="{{ settings.camera_password }}" placeholder="admin">
+                        <div class="form-text">Password for camera authentication</div>
+                    </div>
+                    
+                    <div class="mb-3">
+                        <label for="ticket_text" class="form-label">Teksti i Biletës</label>
+                        <textarea class="form-control" id="ticket_text" name="ticket_text" rows="3" placeholder="Shkruani tekstin që do të shfaqet në biletë">{{ settings.ticket_text }}</textarea>
+                        <div class="form-text">Ky tekst do të shfaqet në çdo biletë të printuar (p.sh. emri i kompanisë, adresa, mesazhe mirëseardhjeje, etj).</div>
+                    </div>
+                    
+                    <div class="d-grid gap-2">
+                        <button type="submit" class="btn btn-primary btn-lg">
+                            <i class="fas fa-save me-2"></i> Save Settings
+                        </button>
+                    </div>
+                </form>
+            </div>
+        </div>
+    </div>
+    
+    <div class="col-md-4">
+        <div class="card">
+            <div class="card-header">
+                <h5 class="mb-0"><i class="fas fa-info-circle"></i> System Information</h5>
+            </div>
+            <div class="card-body">
+                <div class="mb-3">
+                    <h6>Current Settings</h6>
+                    <ul class="list-unstyled">
+                                                    <li><strong>Tarifa Për Orë:</strong> €{{ "%.2f"|format(settings.hourly_rate) }}</li>
+                            <li><strong>Tarifa Ditore:</strong> €{{ "%.2f"|format(settings.daily_rate) }}</li>
+                        <li><strong>Max Capacity:</strong> {{ settings.max_capacity }} vehicles</li>
+                        <li><strong>Camera IP:</strong> {{ settings.camera_ip }}</li>
+                    </ul>
+                </div>
+                
+                <div class="mb-3">
+                    <h6>System Status</h6>
+                    <div class="d-flex align-items-center mb-2">
+                        <i class="fas fa-database text-primary me-2"></i>
+                        <span>Database</span>
+                        <span class="badge bg-success ms-auto">Connected</span>
+                    </div>
+                    <div class="d-flex align-items-center mb-2">
+                        <i class="fas fa-camera text-primary me-2"></i>
+                        <span>Camera</span>
+                        <span class="badge bg-success ms-auto">Ready</span>
+                    </div>
+                    <div class="d-flex align-items-center mb-2">
+                        <i class="fas fa-print text-primary me-2"></i>
+                        <span>Printer</span>
+                        <span class="badge bg-success ms-auto">Ready</span>
+                    </div>
+                    <div class="d-flex align-items-center mb-2">
+                        <i class="fas fa-microchip text-primary me-2"></i>
+                        <span>GPIO</span>
+                        <span class="badge bg-success ms-auto">Active</span>
+                    </div>
+                </div>
+            </div>
+        </div>
+        
+        <div class="card mt-3">
+            <div class="card-header">
+                <h5 class="mb-0"><i class="fas fa-tools"></i> Quick Actions</h5>
+            </div>
+            <div class="card-body">
+                <div class="d-grid gap-2">
+                    <button class="btn btn-outline-primary" onclick="testCamera()">
+                        <i class="fas fa-video"></i> Test Camera
+                    </button>
+                    <button class="btn btn-outline-success" onclick="testPrinter()">
+                        <i class="fas fa-print"></i> Test Printer
+                    </button>
+                    <button class="btn btn-outline-warning" onclick="testBarrier()">
+                        <i class="fas fa-door-open"></i> Test Barrier
+                    </button>
+                    <button class="btn btn-outline-info" onclick="backupDatabase()">
+                        <i class="fas fa-download"></i> Backup Database
+                    </button>
+                </div>
+            </div>
+        </div>
+        
+        <div class="card mt-3">
+            <div class="card-header">
+                <h5 class="mb-0"><i class="fas fa-exclamation-triangle"></i> Important Notes</h5>
+            </div>
+            <div class="card-body">
+                <div class="alert alert-warning">
+                    <small>
+                        <strong>Camera Setup:</strong><br>
+                        • Ensure camera is accessible via IP<br>
+                        • Check username/password are correct<br>
+                        • Test connection before saving
+                    </small>
+                </div>
+                
+                <div class="alert alert-info">
+                    <small>
+                        <strong>Rates:</strong><br>
+                        • Hourly rate applies to stays under 24h<br>
+                        • Daily rate applies to stays 24h or longer<br>
+                        • Rates are calculated automatically
+                    </small>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}
+
+{% block scripts %}
+<script>
+function testCamera() {
+    alert('Testing camera connection...\nThis will attempt to capture a test photo.');
+    // Add actual camera test functionality here
+}
+
+function testPrinter() {
+    alert('Testing printer...\nThis will print a test ticket.');
+    // Add actual printer test functionality here
+}
+
+function testBarrier() {
+    if (confirm('This will open the barrier for 2 seconds. Continue?')) {
+        alert('Testing barrier...\nBarrier will open for 2 seconds.');
+        // Add actual barrier test functionality here
+    }
+}
+
+function backupDatabase() {
+    alert('Creating database backup...\nBackup will be saved to /backups/');
+    // Add actual backup functionality here
+}
+
+// Form validation
+document.querySelector('form').addEventListener('submit', function(e) {
+    const hourlyRate = parseFloat(document.getElementById('hourly_rate').value);
+    const dailyRate = parseFloat(document.getElementById('daily_rate').value);
+    const maxCapacity = parseInt(document.getElementById('max_capacity').value);
+    
+    if (hourlyRate < 0 || dailyRate < 0 || maxCapacity < 1) {
+        e.preventDefault();
+        alert('Please enter valid values for all fields.');
+        return false;
+    }
+    
+    if (dailyRate < hourlyRate) {
+        if (!confirm('Daily rate is less than hourly rate. Are you sure?')) {
+            e.preventDefault();
+            return false;
+        }
+    }
+});
+</script>
+{% endblock %} 

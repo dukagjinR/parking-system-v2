@@ -1,0 +1,61 @@
+{% extends "base.html" %}
+
+{% block title %}Testimi i Hyrjes{% endblock %}
+
+{% block content %}
+<div class="container mt-4">
+    <div class="row">
+        <div class="col-12">
+            <h1 class="mb-4">🚗 Testimi i Hyrjes së Automjetit</h1>
+            <div class="alert alert-info">
+                <strong>Mjedisi i Testimit</strong> - Kjo simulon hyrjen e automjetit pa harduer të vërtetë
+            </div>
+        </div>
+    </div>
+
+    <div class="row">
+        <div class="col-md-8">
+            <div class="card">
+                <div class="card-header">
+                    <h5>📝 Forma e Hyrjes</h5>
+                </div>
+                <div class="card-body">
+                    <form method="POST" action="/entry">
+                        <div class="mb-3">
+                            <label for="plate_number" class="form-label">Numri i Targës</label>
+                            <input type="text" class="form-control" id="plate_number" name="plate_number" 
+                                   placeholder="Shkruani numrin e targës" required>
+                            <div class="form-text">Shkruani një numër targe testimi (p.sh., TEST-123)</div>
+                        </div>
+                        
+                        <div class="d-grid gap-2">
+                            <button type="submit" class="btn btn-success">
+                                <i class="fas fa-car"></i> Simulo Hyrjen e Automjetit
+                            </button>
+                            <a href="/test" class="btn btn-secondary">
+                                <i class="fas fa-arrow-left"></i> Kthehu në Dashboard të Testimit
+                            </a>
+                        </div>
+                    </form>
+                </div>
+            </div>
+        </div>
+
+        <div class="col-md-4">
+            <div class="card">
+                <div class="card-header">
+                    <h5>🔧 Veçoritë e Testimit</h5>
+                </div>
+                <div class="card-body">
+                    <ul class="list-unstyled">
+                        <li><i class="fas fa-camera text-primary"></i> Simulimi i kapjes së fotove</li>
+                        <li><i class="fas fa-print text-primary"></i> Simulimi i printimit të biletave</li>
+                        <li><i class="fas fa-door-open text-primary"></i> Simulimi i kontrollit të barrierës</li>
+                        <li><i class="fas fa-database text-primary"></i> Ruajtja në bazën e të dhënave</li>
+                    </ul>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %} 

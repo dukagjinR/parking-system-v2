@@ -1,0 +1,254 @@
+{% extends "base.html" %}
+
+{% block title %}Dalja e Automjetit - Sistemi i Menaxhimit të Parkingut{% endblock %}
+
+{% block content %}
+<div class="d-flex justify-content-between flex-wrap flex-md-nowrap align-items-center pt-3 pb-2 mb-3 border-bottom">
+    <h1 class="h2"><i class="fas fa-sign-out-alt"></i> Dalja e Automjetit</h1>
+    <div class="btn-toolbar mb-2 mb-md-0">
+        <a href="{{ url_for('dashboard') }}" class="btn btn-sm btn-outline-secondary">
+            <i class="fas fa-arrow-left"></i> Kthehu në Dashboard
+        </a>
+    </div>
+</div>
+
+<div class="row">
+    <div class="col-md-8">
+        <div class="card">
+            <div class="card-header">
+                <h5 class="mb-0"><i class="fas fa-car me-2"></i>Proceso Daljen e Automjetit</h5>
+            </div>
+            <div class="card-body">
+                <form method="POST">
+                    <div class="mb-3">
+                        <label for="ticket_number" class="form-label">Numri i Biletës</label>
+                        <input type="text" class="form-control" id="ticket_number" name="ticket_number" 
+                               placeholder="Shkruani numrin e biletës (p.sh. T20240101120000)" required>
+                        <div class="form-text">Shkruani numrin e biletës që u dha gjatë hyrjes</div>
+                    </div>
+                    
+                    <div class="d-grid">
+                        <button type="submit" class="btn btn-danger btn-lg">
+                            <i class="fas fa-sign-out-alt me-2"></i>
+                            Proceso Daljen
+                        </button>
+                    </div>
+                </form>
+            </div>
+        </div>
+    </div>
+    
+    <div class="col-md-4">
+        <div class="card">
+            <div class="card-header">
+                <h5 class="mb-0"><i class="fas fa-info-circle me-2"></i>Informacion</h5>
+            </div>
+            <div class="card-body">
+                <ul class="list-unstyled">
+                    <li class="mb-2">
+                        <i class="fas fa-calculator text-primary me-2"></i>
+                        Tarifa do të llogaritet automatikisht
+                    </li>
+                    <li class="mb-2">
+                        <i class="fas fa-camera text-primary me-2"></i>
+                        Foto do të kapet gjatë daljes
+                    </li>
+                    <li class="mb-2">
+                        <i class="fas fa-print text-primary me-2"></i>
+                        Fatura do të printohet
+                    </li>
+                    <li class="mb-2">
+                        <i class="fas fa-door-open text-primary me-2"></i>
+                        Barriera do të hapet
+                    </li>
+                </ul>
+                
+                <hr>
+                
+                <div class="alert alert-info">
+                    <h6><i class="fas fa-lightbulb me-2"></i>Këshilla:</h6>
+                    <ul class="mb-0">
+                        <li>Sigurohuni që biletën ta keni me vete</li>
+                        <li>Numri i biletës është në QR kodin</li>
+                        <li>Prisni derisa tarifa të llogaritet</li>
+                        <li>Merrni faturën para se të dilni</li>
+                    </ul>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Recent Exits -->
+<div class="row mt-4">
+    <div class="col-12">
+        <div class="card">
+            <div class="card-header">
+                <h5 class="mb-0"><i class="fas fa-history me-2"></i>Daljet e Fundit</h5>
+            </div>
+            <div class="card-body">
+                <div class="table-responsive">
+                    <table class="table table-hover">
+                        <thead>
+                            <tr>
+                                <th>Koha</th>
+                                <th>Targa</th>
+                                <th>Bileta</th>
+                                <th>Tarifa (€)</th>
+                                <th>Statusi</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            {% for vehicle in recent_exits %}
+                            <tr>
+                                <td>{{ vehicle.exit_time.strftime('%H:%M:%S') }}</td>
+                                <td><strong>{{ vehicle.plate_number }}</strong></td>
+                                <td><span class="badge bg-success">{{ vehicle.ticket_number }}</span></td>
+                                <td><strong>€{{ "%.2f"|format(vehicle.total_payment) }}</strong></td>
+                                <td><span class="badge bg-danger">Doli</span></td>
+                            </tr>
+                            {% else %}
+                            <tr>
+                                <td colspan="5" class="text-center text-muted">Nuk ka dalje të fundit</td>
+                            </tr>
+                            {% endfor %}
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}
+
+{% block scripts %}
+<script>
+// Scan ticket function
+function scanTicket() {
+    fetch('/scan_barcode')
+        .then(response => response.json())
+        .then(data => {
+            if (data.success) {
+                document.getElementById('ticket_number').value = data.ticket_number;
+                calculateFee(data.ticket_number);
+            } else {
+                alert('No valid ticket found. Please try again.');
+            }
+        })
+        .catch(error => {
+            console.error('Error:', error);
+            alert('Error scanning ticket');
+        });
+}
+
+// Calculate fee function
+function calculateFee(ticketNumber) {
+    fetch('/api/vehicles')
+        .then(response => response.json())
+        .then(data => {
+            const vehicle = data.find(v => v.ticket_number === ticketNumber && v.is_inside);
+            if (vehicle) {
+                const entryTime = new Date(vehicle.entry_time);
+                const now = new Date();
+                const duration = (now - entryTime) / (1000 * 60 * 60); // hours
+                
+                // Simple fee calculation (2€ per hour)
+                const fee = Math.ceil(duration) * 2;
+                
+                const calculator = document.getElementById('fee-calculator');
+                calculator.innerHTML = `
+                    <div class="row">
+                        <div class="col-6">
+                            <strong>Plate:</strong><br>
+                            <span class="text-primary">${vehicle.plate_number}</span>
+                        </div>
+                        <div class="col-6">
+                            <strong>Entry Time:</strong><br>
+                            <span class="text-muted">${entryTime.toLocaleString()}</span>
+                        </div>
+                    </div>
+                    <hr>
+                    <div class="row">
+                        <div class="col-6">
+                            <strong>Duration:</strong><br>
+                            <span class="text-info">${Math.ceil(duration)} hours</span>
+                        </div>
+                        <div class="col-6">
+                            <strong>Fee:</strong><br>
+                            <span class="text-success fw-bold">€${fee.toFixed(2)}</span>
+                        </div>
+                    </div>
+                `;
+            } else {
+                document.getElementById('fee-calculator').innerHTML = 
+                    '<p class="text-danger text-center">Invalid ticket or vehicle already exited</p>';
+            }
+        })
+        .catch(error => {
+            console.error('Error calculating fee:', error);
+            document.getElementById('fee-calculator').innerHTML = 
+                '<p class="text-danger text-center">Error calculating fee</p>';
+        });
+}
+
+// Load recent exits
+function loadRecentExits() {
+    fetch('/api/vehicles')
+        .then(response => response.json())
+        .then(data => {
+            const recentExits = data.filter(v => !v.is_inside).slice(0, 5);
+            const container = document.getElementById('recent-exits');
+            
+            if (recentExits.length === 0) {
+                container.innerHTML = '<p class="text-muted text-center">No recent exits</p>';
+                return;
+            }
+            
+            let html = '<div class="table-responsive"><table class="table table-hover">';
+            html += '<thead><tr><th>Plate</th><th>Ticket</th><th>Exit Time</th><th>Duration</th><th>Fee</th></tr></thead><tbody>';
+            
+            recentExits.forEach(vehicle => {
+                const entryTime = new Date(vehicle.entry_time);
+                const exitTime = new Date(vehicle.exit_time);
+                const duration = Math.floor((exitTime - entryTime) / (1000 * 60)); // minutes
+                
+                html += `<tr>
+                    <td><strong>${vehicle.plate_number}</strong></td>
+                    <td><code>${vehicle.ticket_number}</code></td>
+                    <td>${exitTime.toLocaleTimeString()}</td>
+                    <td>${duration} min</td>
+                                            <td><span class="text-success fw-bold">€${vehicle.total_payment.toFixed(2)}</span></td>
+                </tr>`;
+            });
+            
+            html += '</tbody></table></div>';
+            container.innerHTML = html;
+        })
+        .catch(error => {
+            console.error('Error loading recent exits:', error);
+            document.getElementById('recent-exits').innerHTML = 
+                '<p class="text-danger text-center">Error loading recent exits</p>';
+        });
+}
+
+// Auto-refresh recent exits
+loadRecentExits();
+setInterval(loadRecentExits, 10000);
+
+// Auto-focus on ticket number input
+document.addEventListener('DOMContentLoaded', function() {
+    document.getElementById('ticket_number').focus();
+});
+
+// Calculate fee when ticket number changes
+document.getElementById('ticket_number').addEventListener('input', function(e) {
+    const ticketNumber = e.target.value.trim();
+    if (ticketNumber.length > 0) {
+        calculateFee(ticketNumber);
+    } else {
+        document.getElementById('fee-calculator').innerHTML = 
+            '<p class="text-muted text-center">Enter ticket number to calculate fee</p>';
+    }
+});
+</script>
+{% endblock %} 
