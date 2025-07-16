@@ -1062,22 +1062,27 @@ if __name__ == '__main__':
     port = int(os.environ.get('PORT', 9000))
     
     with app.app_context():
-        db.create_all()
+        # Check and fix database issues
+        db_recreated = check_and_fix_database()
         
-        # Create default users if they don't exist
-        if not User.query.filter_by(username='admin').first():
-            admin = User(username='admin', name='Administrator', role='admin')
-            admin.set_password('admin123')
-            db.session.add(admin)
-            print("✅ Admin user created: admin/admin123")
-        
-        if not User.query.filter_by(username='operator').first():
-            operator = User(username='operator', name='Operator', role='operator')
-            operator.set_password('operator123')
-            db.session.add(operator)
-            print("✅ Operator user created: operator/operator123")
-        
-        db.session.commit()
+        # Create default data if database was recreated
+        if db_recreated:
+            create_default_data()
+        else:
+            # Create default users if they don't exist
+            if not User.query.filter_by(username='admin').first():
+                admin = User(username='admin', name='Administrator', role='admin')
+                admin.set_password('admin123')
+                db.session.add(admin)
+                print("✅ Admin user created: admin/admin123")
+            
+            if not User.query.filter_by(username='operator').first():
+                operator = User(username='operator', name='Operator', role='operator')
+                operator.set_password('operator123')
+                db.session.add(operator)
+                print("✅ Operator user created: operator/operator123")
+            
+            db.session.commit()
         
         # Update expired cards
         update_expired_cards()
