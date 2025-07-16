@@ -1058,39 +1058,14 @@ def create_default_data():
         print(f"❌ Error creating default data: {e}")
 
 if __name__ == '__main__':
-    # Get port from environment variable (for Render.com) or use default
-    port = int(os.environ.get('PORT', 9000))
+    # Check and fix database on startup
+    check_and_fix_database()
     
-    with app.app_context():
-        # Check and fix database issues
-        db_recreated = check_and_fix_database()
-        
-        # Create default data if database was recreated
-        if db_recreated:
-            create_default_data()
-        else:
-            # Create default users if they don't exist
-            if not User.query.filter_by(username='admin').first():
-                admin = User(username='admin', name='Administrator', role='admin')
-                admin.set_password('admin123')
-                db.session.add(admin)
-                print("✅ Admin user created: admin/admin123")
-            
-            if not User.query.filter_by(username='operator').first():
-                operator = User(username='operator', name='Operator', role='operator')
-                operator.set_password('operator123')
-                db.session.add(operator)
-                print("✅ Operator user created: operator/operator123")
-            
-            db.session.commit()
-        
-        # Update expired cards
-        update_expired_cards()
-        
-        # Add GPIO event detection
-        if HARDWARE_AVAILABLE:
-            GPIO.add_event_detect(ENTRY_BUTTON, GPIO.FALLING, callback=entry_button_callback, bouncetime=300)
-            GPIO.add_event_detect(EXIT_BUTTON, GPIO.FALLING, callback=exit_button_callback, bouncetime=300)
+    # Update expired RFID cards
+    update_expired_cards()
     
-    # Run the app
-    app.run(host='0.0.0.0', port=port, debug=False) 
+    # Create default data if needed
+    create_default_data()
+    
+    # Run the application
+    app.run(host='0.0.0.0', port=9000, debug=False) 
